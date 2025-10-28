@@ -24,9 +24,16 @@ const cloudinaryConfig = {
 // DB_URL=mongodb+srv://mdjavedshekh1210:javed1210@cluster1.jt6wkhm.mongodb.net/cooking?retryWrites=true&w=majority&appName=AtlasApp
 
 const SALT = parseInt(process.env.SALT);
-const MONGODB_URL = process.env.DB_URL?.length <= 30 ? `${process.env.DB_URL}/${process.env.DATABASE}`:  `${process.env.DB_URL}/${process.env.DATABASE}?retryWrites=true&w=majority&appName=AtlasApp`;
+const dbUrl = process.env.DB_URL || "";
+const dbName = process.env.DATABASE || "";
+
+const MONGODB_URL =
+  dbUrl.length <= 30
+    ? `${dbUrl}/${dbName}`
+    : `${dbUrl}/${dbName}?retryWrites=true&w=majority&appName=AtlasApp`;
+
 const PORT = process.env.PORT;
-const allowedOrigins = ["http://10.118.125.127:5173","https://cookify-ruby-eight.vercel.app",process.env.FRONTEND];
+const allowedOrigins = ["https://cookify-ruby-eight.vercel.app","http://10.118.125.127:5173",process.env.FRONTEND];
 const Tokens = {
     acessToken: process.env.ACCESS_TOKEN,
     accessTokenExpiry: process.env.ACCESS_TOKEN_EXPIRY,

@@ -13,23 +13,28 @@ const Schh = require("./models/recipeCategorySchema");
 
 // default 
 app.use(helmet());
-const corsOptions = {
-  credentials: true,
-  methods: ["POST", "GET", "DELETE", "PUT", "PATCH"],
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.log("❌ Blocked CORS origin:", origin);
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
+const corsOptionsDelegate = (req, callback) => {
+  const origin = req.header("Origin");
+  let corsOptions;
+
+  if (!origin || allowedOrigins.includes(origin)) {
+    corsOptions = { origin: true, credentials: true };
+  } else {
+    corsOptions = { origin: false };
+    console.log("❌ CORS blocked:", origin);
+  }
+
+  callback(null, corsOptions);
 };
-app.options('*', cors(corsOptions)); // handle preflight
-app.use(cors(corsOptions));
+
+// ✅ CORS middleware
+app.use(cors(corsOptionsDelegate));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 app.use(cookieParser());
+
+
 
 
 
@@ -37,6 +42,9 @@ app.use(cookieParser());
 app.use("/api/auth", authRoute);
 app.use("/api/recipe", recipeRoute);
 
+app.get("/", (req, res) => {
+  res.json({ message: "Server working fine ✅" });
+});
 
 app.all("/{*any}", (req, res, next) => {
   const err = new Error(`Route ${req.originalUrl} not found`);
@@ -50,3 +58,6 @@ app.all("/{*any}", (req, res, next) => {
 app.use(errorHandler);
 
 module.exports = app;
+
+
+
