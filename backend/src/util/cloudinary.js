@@ -38,20 +38,19 @@ cloudinary.config(cloudinaryConfig);
 //   }
 // };
 
-const cloudinaryUpload = (buffer, folder, resource_type = "image") => {
+const cloudinaryUpload = (buffer, folder, resourceType = "image") => {
   return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      { folder, resource_type },
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder, resource_type: resourceType },
       (error, result) => {
         if (error) reject(error);
         else resolve(result);
       }
     );
 
-    streamifier.createReadStream(buffer).pipe(stream);
+    streamifier.createReadStream(buffer).pipe(uploadStream);
   });
 };
-
 
 // ✅ Delete file
 const cloudinaryDelete = async (public_id, fileType = "image") => {

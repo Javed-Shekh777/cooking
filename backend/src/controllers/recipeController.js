@@ -8,9 +8,6 @@ const RecipeCategorySchema = require("../models/recipeCategorySchema");
 const mongoose = require("mongoose");
 
 
-
-
-
 exports.addRecipe = async (req, res) => {
   try {
 
@@ -39,7 +36,7 @@ exports.addRecipe = async (req, res) => {
     // Dish image
     let dishImage = {};
     if (req.files?.dishImage) {
-      const cloures = await cloudinaryUpload(req.files.dishImage[0].path, cloudinaryFolderNames.images, "image");
+      const cloures = await cloudinaryUpload(req.files.dishImage[0].buffer, cloudinaryFolderNames.images, "image");
       dishImage = {
         url: cloures.secure_url,
         public_id: cloures.public_id,
@@ -50,7 +47,7 @@ exports.addRecipe = async (req, res) => {
     // Dish video
     let dishVideo = {};
     if (req.files?.dishVideo) {
-      const cloures = await cloudinaryUpload(req.files.dishVideo[0].path, cloudinaryFolderNames.videos, "video");
+      const cloures = await cloudinaryUpload(req.files.dishVideo[0].buffer, cloudinaryFolderNames.videos, "video");
       dishVideo = {
         url: cloures.secure_url,
         public_id: cloures.public_id,
@@ -66,7 +63,7 @@ exports.addRecipe = async (req, res) => {
       const step = parsedDirections[i];
       let stepImage = {};
       if (req.files?.directionImages && req.files.directionImages[i]) {
-        const imgUpload = await cloudinaryUpload(req.files.directionImages[i].path, cloudinaryFolderNames.images, "image");
+        const imgUpload = await cloudinaryUpload(req.files.directionImages[i].buffer, cloudinaryFolderNames.images, "image");
         stepImage = {
           url: imgUpload.secure_url,
           public_id: imgUpload.public_id,
@@ -173,7 +170,7 @@ if (req.files?.dishImage?.[0]) {
   }
 
   const uploadRes = await cloudinaryUpload(
-    req.files.dishImage[0].path,
+    req.files.dishImage[0].buffer,
     cloudinaryFolderNames.images,
     "image"
   );
@@ -200,7 +197,7 @@ else if (req.files?.dishVideo?.[0]) {
   }
 
   const uploadRes = await cloudinaryUpload(
-    req.files.dishVideo[0].path,
+    req.files.dishVideo[0].buffer,
     cloudinaryFolderNames.videos,
     "video"
   );
@@ -234,7 +231,7 @@ else if (req.files?.dishVideo?.[0]) {
         }
 
         const uploadRes = await cloudinaryUpload(
-          req.files.directionImages[uploadIndex].path,
+          req.files.directionImages[uploadIndex].buffer,
           cloudinaryFolderNames.images,
           "image"
         );
