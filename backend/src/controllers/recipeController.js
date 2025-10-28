@@ -402,7 +402,7 @@ exports.addCategory = async (req, res) => {
 
     // Multer stores file in req.file, not req.file.categoryImage
     if (req.file) {
-      cloud = await cloudinaryUpload(req.file.path, cloudinaryFolderNames.images, "image");
+      cloud = await cloudinaryUpload(req.file.buffer, cloudinaryFolderNames.images, "image");
     }
 
     // Create category

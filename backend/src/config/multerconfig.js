@@ -3,7 +3,7 @@ const path  = require("path");
 
 
 // storage engine
-const storage = multer.diskStorage({
+const storage = multer.memoryStorage({
   destination: function (req, file, cb) {
     // file ko public/uploads folder me save karna
     cb(null, path.join(__dirname, "../../public/uploads"));
@@ -23,6 +23,6 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-const upload = multer({ storage, fileFilter });
+const upload = multer({storage, fileFilter });
 
 module.exports = upload;
