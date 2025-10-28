@@ -5,7 +5,7 @@ import Category from '../components/CategoryCard'
 import Contact from '../pages/Contact'
 import { Outlet } from 'react-router-dom'
 
-const Index = () => {
+const MainLayout = () => {
   return (
    <div className="">
     <Navbar />
@@ -18,4 +18,4 @@ const Index = () => {
   )
 }
 
-export default Index
+export default MainLayout

@@ -1,7 +1,5 @@
 import { Outlet } from "react-router-dom";
-import Index from "./layout";
-import Footer from "./layout/Footer";
-import Navbar from "./layout/Navbar";
+import Index from "./layout/MainLayout";
 import {Toaster} from "react-hot-toast"
 
 
