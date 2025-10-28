@@ -20,11 +20,12 @@ const corsOptions = {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.log("❌ Blocked CORS origin:", origin);
       callback(new Error("Not allowed by CORS"));
     }
   },
 };
-
+app.options('*', cors(corsOptions)); // handle preflight
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
