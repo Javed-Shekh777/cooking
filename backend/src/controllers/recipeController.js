@@ -487,7 +487,7 @@ exports.getCategories = async (req, res) => {
   try {
     const categories = await RecipeCategorySchema.find();
     if (categories.length <= 0) {
-      return errorResponse(res, error.message || "Category fetch failed.", 401);
+      return errorResponse(res,  "Category fetch failed.", 401);
     }
     return successResponse(res, "Category fetched.", categories);
   } catch (error) {

@@ -33,7 +33,7 @@ const verifyMail = async ({ username, email, webToken = "", verificationCode }) 
           
           <p>If the OTP is not visible or you prefer a one-click verification, click the button below:</p>
           <div style="text-align: center; margin: 20px 0;">
-            <a href="http://localhost:5173/verify?token=${webToken}&email=${email}" 
+            <a href="${process.env.FRONTEND}/verify?token=${webToken}&email=${email}" 
               style="display: inline-block; padding: 12px 20px; background-color: #4CAF50; color: #fff; text-decoration: none; border-radius: 5px; font-weight: bold;">
               Verify Email
             </a>
