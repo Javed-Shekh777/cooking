@@ -1,0 +1,56 @@
+# ==========================
+# 📦 Node & Environment
+# ==========================
+node_modules/
+.env
+.env.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ==========================
+# 🗂️ Build / Dist files
+# ==========================
+dist/
+build/
+.tmp/
+.cache/
+coverage/
+.DS_Store
+
+# ==========================
+# 📤 Uploads & Temp Files
+# ==========================
+public/uploads/
+uploads/
+temp/
+tmp/
+*.tmp
+*.log
+
+# ==========================
+# ⚙️ OS / Editor configs
+# ==========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==========================
+# 💨 System Files
+# ==========================
+Thumbs.db
+desktop.ini
+
+# ==========================
+# 🔒 Certificates (if any)
+# ==========================
+*.pem
+*.key
+*.crt
+
+# ==========================
+# 🧠 Misc
+# ==========================
+package-lock.json
