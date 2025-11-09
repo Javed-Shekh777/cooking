@@ -23,6 +23,8 @@ coverage/
 # 📤 Uploads & Temp Files
 # ==========================
 public/uploads/
+public/images/
+
 uploads/
 temp/
 tmp/

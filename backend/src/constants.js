@@ -5,7 +5,9 @@ const SchemaName = {
     recipeLike: "RecipeLike",
     tag:"Tag",
     recipeCategory:"recipeCategory",
-    contact:"Contact"
+    contact:"Contact",
+    replpy:"Reply",
+    recipeComment:"RecipeComment",
 
 }
 
@@ -33,7 +35,7 @@ const MONGODB_URL =
     : `${dbUrl}/${dbName}?retryWrites=true&w=majority&appName=AtlasApp`;
 
 const PORT = process.env.PORT;
-const allowedOrigins = ["https://cookify-ruby-eight.vercel.app","http://10.118.125.127:5173",process.env.FRONTEND];
+const allowedOrigins = ["https://cookify-ruby-eight.vercel.app","http://10.75.250.127:5173",process.env.FRONTEND,];
 const Tokens = {
     acessToken: process.env.ACCESS_TOKEN,
     accessTokenExpiry: process.env.ACCESS_TOKEN_EXPIRY,

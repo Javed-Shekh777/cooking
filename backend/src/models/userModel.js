@@ -18,6 +18,11 @@ const userSchema = new mongoose.Schema({
         lowercase:true,
         trim:true
     },
+    fullName: {
+        type: String,
+        required: [true, "Fullname is required"],
+        trim:true
+    },
     username: {
         type: String,
         required: [true, "Username is required"],
@@ -33,7 +38,7 @@ const userSchema = new mongoose.Schema({
         // maxlength: [15, "Password cannot exceed 15 characters"]
         // required removed for social login
     },
-    profilePic: {
+    profileImage: {
         url: { type: String, default: "" },
         publicId: { type: String, default: "" }
     },

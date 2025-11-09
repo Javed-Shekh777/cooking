@@ -1,7 +1,8 @@
+import { FaStar } from "react-icons/fa";
 import { FaHeart, FaStopwatch } from "react-icons/fa6";
 import { PiForkKnifeBold } from "react-icons/pi";
 
-const RecipieCard = ({ url, isLiked, title, time, type }) => {
+const RecipieCard = ({ url, isLiked, title, time, type, }) => {
     return (
         <div className="group cursor-pointer relative rounded-3xl overflow-hidden px-3.5
         pt-2 pb-7  "
@@ -25,6 +26,8 @@ const RecipieCard = ({ url, isLiked, title, time, type }) => {
 
             {/* Title */}
             <div className="mt-4">
+                {/* <div className="flex items-center gap-x-1.5">{[1,2,3,4,5].map((starIndex) => (<FaStar size={20} className="text-yellow-400 inline-block mb-2" />))}</div> */}
+                
                 <h3 className='title text-xl sm:w-[80%] w-full'>{title}</h3>
                 <div className="flex items-center gap-x-3.5 mt-3">
                     <div className="time flex items-center gap-x-1">

@@ -6,10 +6,12 @@ const initialState = {
     suggestTags: [],
     categories: [],
     recipes: [],
+    recipeCategory: [],
     recipe: {},
     dashboardData: null,
     loading: false,
     error: null,
+    category:null
 };
 
 export const suggestTags = createAsyncThunk(
@@ -58,7 +60,7 @@ export const updateRecipe = createAsyncThunk("recipe/update-recipe", async ({ id
 })
 
 
-export const getCategories = createAsyncThunk("recipe/getCategory", async (_, { rejectWithValue }) => {
+export const getCategories = createAsyncThunk("recipe/getCategories", async (_, { rejectWithValue }) => {
     try {
         const res = await api.get(recipeApis.getCageroy);
         console.log("Response:", res.data);
@@ -69,9 +71,13 @@ export const getCategories = createAsyncThunk("recipe/getCategory", async (_, { 
     }
 })
 
-export const getRecipes = createAsyncThunk("recipe/getRecipes", async (_, { rejectWithValue }) => {
+export const getRecipes = createAsyncThunk("recipe/getRecipes", async (categoryId=null, { rejectWithValue }) => {
     try {
-        const res = await api.get(recipeApis.getRecipes);
+         const url = categoryId
+        ? `${recipeApis.getRecipes}?categoryId=${categoryId}`
+        : `${recipeApis.getRecipes}`;
+
+        const res = await api.get(url);
         console.log("Response:", res.data);
         return res.data.data; // ✅ sirf array of recipes chahiye
     } catch (error) {
@@ -80,11 +86,39 @@ export const getRecipes = createAsyncThunk("recipe/getRecipes", async (_, { reje
     }
 })
 
+
+export const getRecipesCategory = createAsyncThunk("recipe/getRecipesCategory", async (id, { rejectWithValue }) => {
+    try {
+        const res = await api.get(`${recipeApis.getRecipesByCategory}/${id}`);
+        console.log("Response:", res.data);
+        return res.data.data; // ✅ sirf array of recipes chahiye
+    } catch (error) {
+        console.log("Response Error:", error);
+        return rejectWithValue(error?.response?.data || "Falied to load Category");
+    }
+})
+
+
 export const getRecipe = createAsyncThunk(
     "recipe/getRecipe",
     async (id, { rejectWithValue }) => {
         try {
             const res = await api.get(`${recipeApis.getRecipe}/${id}`); // ✅ id inject hua
+            console.log("Response:", res.data);
+            return res.data.data;
+        } catch (error) {
+            console.log("Response Error:", error);
+            return rejectWithValue(error?.response?.data || "Failed to load Recipe");
+        }
+    }
+);
+
+
+export const getCategory = createAsyncThunk(
+    "recipe/getCategory",
+    async (id, { rejectWithValue }) => {
+        try {
+            const res = await api.get(`${recipeApis.getCageroy}/${id}`); // ✅ id inject hua
             console.log("Response:", res.data);
             return res.data.data;
         } catch (error) {
@@ -216,12 +250,48 @@ const recipeSlice = createSlice({
             })
             .addCase(getRecipe.fulfilled, (state, action) => {
                 state.loading = false;
+                console.log("payload: ",action.payload);
                 state.recipe = action.payload; // ✅ yahan array set ho raha
             })
             .addCase(getRecipe.rejected, (state, action) => {
                 state.loading = false;
+                console.log("payload: ",action.payload);
+
                 state.error = action.payload;
             })
+
+
+             .addCase(getRecipesCategory.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(getRecipesCategory.fulfilled, (state, action) => {
+                state.loading = false;
+                state.recipeCategory = action.payload; // ✅ yahan array set ho raha
+            })
+            .addCase(getRecipesCategory.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+
+
+            //  .addCase(getCategory.pending, (state) => {
+            //     state.loading = true;
+            //     state.error = null;
+            // })
+            .addCase(getCategory.fulfilled, (state, action) => {
+                state.loading = false;
+                console.log("payload: ",action.payload);
+                state.category = action.payload; // ✅ yahan array set ho raha
+            })
+            .addCase(getCategory.rejected, (state, action) => {
+                state.loading = false;
+                console.log("payload: ",action.payload);
+
+                state.error = action.payload;
+            })
+
+
              .addCase(dashboard.pending, (state) => {
                 state.loading = true;
                 state.error = null;

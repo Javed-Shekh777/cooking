@@ -9,26 +9,4 @@ const tagSchema = new mongoose.Schema({
 const tagModel = mongoose.model(SchemaName.tag, tagSchema);
 
 module.exports = tagModel;
-
-
-// tagModel.insertMany([
-//     {
-//         name: "Quick",
-//     },{
-//          name: "Vegetarian"
-//     },
-//     {
-//           name: "Snack",
-      
-//     },
-//     {
-//           name: "Breakfast",
-      
-//     },
-//     {
-//           name: "Tasty",
-//     },{
-//         name: "Yummy"
-
-//     }
-// ]);
+ 

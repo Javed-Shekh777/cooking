@@ -12,7 +12,8 @@ const ChefLayout = () => {
         <section className='flex   w-full  '>
             <Sidemenu />
             <div className="relative lg:ml-64 sm:ml-52 ml-0 sm:p-5 p-3 w-full">
-                {loading ? <Spinner /> : <Outlet />}
+                {/* {loading ? <Spinner /> : <Outlet />} */}
+                <Outlet />
             </div>
         </section>
     )

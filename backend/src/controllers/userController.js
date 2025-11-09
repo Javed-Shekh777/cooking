@@ -3,9 +3,10 @@ const User = require("../models/userModel");
 const { verifyMail, accountCreationMail, contactMail } = require("../helper/sendMail");
 const { generateNumOTP } = require("../helper/generateOTP");
 const JWT = require("jsonwebtoken");
-const { Tokens } = require("../constants");
+const { Tokens, cloudinaryFolderNames } = require("../constants");
 const { logUserActivity } = require("../helper/logUserActivity");
 const Contact = require("../models/contactSchema");
+const { cloudinaryUpload, cloudinaryDelete } = require("../util/cloudinary");
 
 
 
@@ -14,8 +15,8 @@ exports.localRegister = async (req, res, next) => {
     session.startTransaction();
 
     try {
-        const { username, email, password = "", role } = req.body;
-        if (!username || !email || !role) {
+        const { username, email, password = "", role, fullName } = req.body;
+        if (!username || !email || !role || !fullName || !password) {
             return errorResponse(res, "All fields required", 400);
         }
 
@@ -36,6 +37,7 @@ exports.localRegister = async (req, res, next) => {
             verificationCode,
             verificationExpiry,
             webToken,
+            fullName
         }], { session });
 
         await verifyMail(createdUser[0]);
@@ -233,3 +235,57 @@ exports.contact = async (req, res) => {
         return errorResponse(res, "Failed to contact.", 500);
     }
 }
+
+
+exports.getUserProfile = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const user = await User.findById(userId).select("-password -accessToken -refreshToken -verificationCode -verificationExpiry -webToken");
+        if (!user) {
+            return errorResponse(res, "User not found", 404);
+        }
+        return successResponse(res, "User profile fetched successfully", user);
+    } catch (error) {
+        return errorResponse(res, error.message || "Failed to fetch user profile", 500);
+    }
+};
+
+
+exports.updateUserProfile = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { fullName, username, oldImage } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return errorResponse(res, "User not found", 404);
+    }
+
+    // Handle image upload
+    if (req.file) {
+      const uploadRes = await cloudinaryUpload(req.file.buffer, cloudinaryFolderNames.profile, "image");
+
+      if (uploadRes?.secure_url && uploadRes?.public_id) {
+        user.profileImage = {
+          url: uploadRes.secure_url,
+          publicId: uploadRes.public_id,
+        };
+
+        if (oldImage) {
+          await cloudinaryDelete(oldImage);
+        }
+      } else {
+        return errorResponse(res, "Image upload failed", 500);
+      }
+    }
+
+    // Update profile fields
+    user.fullName = fullName || user.fullName;
+    user.username = username || user.username;
+
+    await user.save();
+    return successResponse(res, "User profile updated successfully", user);
+  } catch (error) {
+    return errorResponse(res, error.message || "Failed to update user profile", 500);
+  }
+};

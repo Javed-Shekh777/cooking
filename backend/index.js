@@ -2,6 +2,7 @@ require("dotenv").config();
 const app = require("./src/app");
 const DB = require("./src/config/db");
 const { PORT, NODE_ENV } = require("./src/constants");
+const catTagSeeder = require("./src/seed/catTagSeeder");
 
 // Handle uncaught exceptions
 process.on("uncaughtException", (err) => {
@@ -20,6 +21,7 @@ DB()
       // local dev ke liye
       server = app.listen(PORT, () => {
         console.log(`🚀 Server running on port ${PORT}`);
+        // catTagSeeder();
       });
     }
   })

@@ -1,0 +1,25 @@
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+    color: black;
+  }
+
+  .printable {
+    padding: 0;
+    box-shadow: none;
+    background: white;
+  }
+
+  img, video {
+    max-width: 100%;
+    height: auto;
+  }
+
+  button, nav, footer {
+    display: none !important;
+  }
+}

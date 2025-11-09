@@ -9,6 +9,7 @@ const initialState = {
     // accessToken: localStorage.getItem("refreshToken") || null,
     // refreshToken: localStorage.getItem("accessToken") || null,
     loading: false,
+    profile: null,
     error: null,
 }
 
@@ -84,6 +85,8 @@ export const refreshTokenApi = createAsyncThunk(
 );
 
 
+
+
 export const contactUs = createAsyncThunk("auth/contact", async (formData, { rejectWithValue }) => {
     try {
         const res = await api.post(authApis.contact,formData);
@@ -91,8 +94,32 @@ export const contactUs = createAsyncThunk("auth/contact", async (formData, { rej
     } catch (err) {
         return rejectWithValue(err.response.data || "Contact failed.");
     }
-})
+});
 
+export const userProfile = createAsyncThunk("auth/userProfile", async (_, { rejectWithValue }) => {
+    try {
+        const res = await api.get(authApis.userProfile);    
+        return res.data;
+    }
+    catch (err) {
+        return rejectWithValue(err.response.data || "Fetching profile failed.");
+    }
+});
+
+
+export const updateProfile = createAsyncThunk("auth/updateProfile", async (formData, { rejectWithValue }) => {
+    try {
+        const res = await api.post(authApis.updateProfile,formData,{
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });    
+        return res.data;
+    }
+    catch (err) {
+        return rejectWithValue(err.response.data || "Updating profile failed.");
+    }
+});
 
 const authSlice = createSlice({
     name: "auth",
@@ -179,6 +206,33 @@ const authSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload?.message || "Contact failed";
             })
+
+
+            .addCase(userProfile.pending, (state) => { state.loading = true; })
+            .addCase(userProfile.fulfilled, (state, action) => {
+                state.loading = false;
+                state.error = null;
+                state.profile = action.payload?.data;
+                
+            })
+            .addCase(userProfile.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload?.message || "Fetching profile failed.";
+            })
+
+            .addCase(updateProfile.pending, (state) => { state.loading = true; })
+            .addCase(updateProfile.fulfilled, (state, action) => {
+                state.loading = false;
+                state.error = null;
+                state.profile = action.payload?.data;
+                state.user = action.payload?.data;
+                localStorage.setItem("loginUserData", JSON.stringify(state.profile));
+
+            })
+            .addCase(updateProfile.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload?.message || "Updating profile failed.";
+            });
 
     }
 });

@@ -107,53 +107,16 @@ const AllRecipes = () => {
 
 
 
-    useEffect(() => {
-        if (recipes?.length <= 0) {
-            dispatch(getRecipes());
-        }
-    }, [recipes]);
+   useEffect(() => {
+  dispatch(getRecipes());
+}, [dispatch]);
+
 
     return (
         <section className='w-full h-full'>
-            <div className="recipesWrapper">
-                {/* <div className="recipes grid lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-4">
-                    {recipes.map((recp) => (
-                        <div className="recipe rounded-2xl shadow p-3">
-                            <div className="image">
-                                <img src={recp.pic} alt="" className='rounded-2xl' />
-                            </div>
-                            <h3 className="title text-2xl my-2">{recp.title}</h3>
-                            
-                            <div className="flex gap-x-1.5">
-                                {recp.tags.map((tg) => (
-                                    <p>{tg}</p>
-                                ))}
-                            </div>
-                            <div className="interactions flex gap-x-2 items-center w-full justify-evenly my-3">
-                                <div className="">
-                                    <FaHeart className='text-red-500' />
-                                    <p>{recp.likes}</p>
-                                </div>
-                                <div className="">
-                                    <FaComment />
-                                    <p>{recp.comment}</p>
-                                </div>
-                                <div className="">
-                                    <FaShare />
-                                    <p>{recp.share}</p>
-                                </div>
-                            </div>
-                            <div className="flex gap-x-2 items-center justify-end">
-                                <button title='View' className='h-[40px] w-[40px] rounded-full flex cursor-pointer items-center justify-center p-1 bg-gray-500/20 text-yellow-500'><FaEye size={20} /></button>
-                                <button title='Edit' className='h-[40px] w-[40px] rounded-full flex cursor-pointer items-center justify-center p-1 bg-gray-500/20 text-green-500'><MdEdit size={25} /></button>
-                                <button title='Delete' className='h-[40px] w-[40px] rounded-full flex cursor-pointer items-center justify-center p-1 bg-gray-500/20 text-red-500'><MdDelete size={25} /></button>
-                            </div>
-                        </div>
-                    ))}
-
-                </div> */}
-
-
+            <div className="recipesWrapper py-6">
+                
+                        
                 <div className="recipes grid lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-6">
                     {
                         recipes.length > 0 ? recipes.map((recp) => (

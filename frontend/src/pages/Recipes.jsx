@@ -7,6 +7,9 @@ import MailBox from '../components/MailBox';
 import { FaEdit } from 'react-icons/fa';
 import { FaShare, FaComment, FaEye, FaHeart, FaStopwatch } from "react-icons/fa6"
 import { PiForkKnifeBold } from "react-icons/pi";
+import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import Spinner from '../components/Spinner';
 
 const tagColors = [
     "bg-red-200 text-red-700",
@@ -28,7 +31,11 @@ const dummyRecipes = [
 
 const Recipes = () => {
     const dispatch = useDispatch();
-    const { suggestTags: suggestions, error, recipes, categories } = useSelector((state) => state.recipe);
+    const { suggestTags: suggestions, error, recipes, loading, categories } = useSelector((state) => state.recipe);
+    const [selectedCategory, setSelectedCategory] = useState("All");
+
+    console.log(recipes);
+
 
 
     useEffect(() => {
@@ -37,13 +44,15 @@ const Recipes = () => {
         }
     }, [dispatch, categories]);
 
-    useEffect(() => {
-        if (recipes?.length <= 0) {
-            dispatch(getRecipes());
-        }
-    }, [recipes]);
 
-       
+
+    useEffect(() => {
+        if (selectedCategory === "All") {
+            dispatch(getRecipes()); // fetch all recipes
+        } else {
+            dispatch(getRecipes(selectedCategory)); // fetch by category ID
+        }
+    }, [selectedCategory, dispatch]);
 
 
 
@@ -52,7 +61,7 @@ const Recipes = () => {
             <div className="recipieDetailsWrapper md:px-8 px-3 py-20">
                 {/* User Info */}
 
-                <div className="w-full p-2">
+                {/* <div className="w-full p-2">
                     <div className="flex overflow-x-auto gap-x-6 no-scrollbar px-1 py-2">
                         {categories?.map((cat) => (
                             <button
@@ -65,68 +74,104 @@ const Recipes = () => {
                             </button>
                         ))}
                     </div>
+                </div> */}
+
+
+                <div className="flex overflow-x-auto gap-x-6 no-scrollbar scrollbar-hide px-1 py-2">
+                    <button
+                        onClick={() => setSelectedCategory("All")}
+                        className={`flex-shrink-0 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm ${selectedCategory === "All"
+                            ? "bg-black text-white shadow-md"
+                            : "bg-gray-100 text-gray-800 hover:bg-black hover:text-white"
+                            }`}
+                    >
+                        All
+                    </button>
+
+                    {categories?.map((cat) => (
+                        <button
+                            key={cat._id}
+                            onClick={() => setSelectedCategory(cat._id)}
+                            className={`flex-shrink-0 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm ${selectedCategory === cat._id
+                                ? "bg-black text-white shadow-md"
+                                : "bg-gray-100 text-gray-800 hover:bg-black hover:text-white"
+                                }`}
+                        >
+                            {cat?.name}
+                        </button>
+                    ))}
                 </div>
 
-                <div className="recipes grid lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-6">
-                    {
-                        recipes.length > 0 ? recipes.map((recp) => (
-                            <div key={recp?._id} className="group cursor-pointer relative rounded-3xl overflow-hidden px-3.5
-                                   pt-2 pb-7  "
+
+                <div className="recipes grid grid-cols-1 pt-5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {loading ? (
+                        <Spinner />
+                    ) : recipes.length > 0 ? (
+                        recipes.map((recp) => (
+                            <div
+                                key={recp?._id}
+                                className="group cursor-pointer relative rounded-3xl overflow-hidden px-3.5 pt-2 pb-7"
                                 style={{
-                                    background: `linear-gradient(180deg, rgba(231, 249, 253, 0) 0%, #E7F9FD 100%)`
+                                    background: `linear-gradient(180deg, rgba(231, 249, 253, 0) 0%, #E7F9FD 100%)`,
                                 }}
                             >
-                                {/* Image */}
-                                <div className="relative  flex ">
-                                    <img
-                                        src={recp?.dishImage?.url}
-                                        alt={`${recp?.title} Receipie`}
-                                        className="rounded-xl
-                                                 duration-300 w-full"
-                                    />
-                                    <div className="likeBox absolute right-6 top-6
-                                            h-[40px] w-[40px] rounded-full flex items-center justify-center bg-white ">
-                                        <FaHeart
-                                            //    style={{color:isLiked ? '#FF0000' : '#DBE2E5' }}
-                                            className={`inline-block  `} size={20} />
-                                    </div>
-                                </div>
-
-                                {/* Title */}
-                                <div className="mt-4">
-                                    <h3 className='title text-xl sm:w-[80%] w-full mb-1'>{recp?.title}</h3>
-
-                                    {/* Tags */}
-                                    <div className="flex gap-1.5 flex-wrap">
-                                        {recp.tags.map((tg, idx) => (
-                                            <span
-                                                key={idx}
-                                                className={`px-2 py-1 rounded-full text-xs font-medium ${tagColors[idx % tagColors.length]
-                                                    }`}
-                                            >
-                                                {tg}
-                                            </span>
-                                        ))}
-                                    </div>
-
-                                    <div className="flex items-center gap-x-3.5 mt-3">
-                                        <div className="time flex items-center gap-x-1">
-                                            <FaStopwatch size={16} />
-                                            <span>{recp.prepTime?.value || "-"} {recp.prepTime?.unit || ""}</span>
+                                <Link
+                                    to={`/category/${recp?.categoryId}/recipe/${recp?._id}`}
+                                    className="text-gray-600 hover:text-black transition-all duration-300"
+                                >
+                                    {/* Image */}
+                                    <div className="relative h-48 w-full overflow-hidden rounded-xl">
+                                        <img
+                                            src={recp?.dishImage?.url || "/placeholder.jpg"}
+                                            alt={`${recp?.title} Recipe`}
+                                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                        />
+                                        <div className="likeBox absolute right-3 top-3 h-9 w-9 rounded-full flex items-center justify-center bg-white shadow">
+                                            <FaHeart className="text-red-500" size={18} />
                                         </div>
-                                        <div className="type flex items-center gap-x-1"><PiForkKnifeBold size={16} className='font-bold' /><span>{recp.cookTime?.value || "-"} {recp.cookTime?.unit || ""}</span></div>
                                     </div>
-                                </div>
+
+
+                                    {/* Title */}
+                                    <div className="mt-4">
+                                        <h3 className="title text-xl sm:w-[80%] w-full mb-1">{recp?.title}</h3>
+
+                                        {/* Tags */}
+                                        <div className="flex gap-1.5 flex-wrap">
+                                            {recp.tags.map((tg, idx) => (
+                                                <span
+                                                    key={idx}
+                                                    className={`px-2 py-1 rounded-full text-xs font-medium ${tagColors[idx % tagColors.length]
+                                                        }`}
+                                                >
+                                                    {tg}
+                                                </span>
+                                            ))}
+                                        </div>
+
+                                        {/* Time & Type */}
+                                        <div className="flex items-center gap-x-3.5 mt-3">
+                                            <div className="time flex items-center gap-x-1">
+                                                <FaStopwatch size={16} />
+                                                <span>
+                                                    {recp.prepTime?.value || "-"} {recp.prepTime?.unit || ""}
+                                                </span>
+                                            </div>
+                                            <div className="type flex items-center gap-x-1">
+                                                <PiForkKnifeBold size={16} className="font-bold" />
+                                                <span>
+                                                    {recp.cookTime?.value || "-"} {recp.cookTime?.unit || ""}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Link>
                             </div>
-                        )) : "No recipes found"
-                    }
+                        ))
+                    ) : (
+                        <p className="text-center col-span-full text-gray-500">No recipes found.</p>
+                    )}
                 </div>
-
-
-
-
-
-
 
 
 

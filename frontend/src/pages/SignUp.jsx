@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 const SignUp = () => {
     const navigate = useNavigate();
 
-    const [formData, setFormData] = useState({ username: "", email: "", password: "", conPassword: "", role: "" });
+    const [formData, setFormData] = useState({ username: "", email: "", password: "", conPassword: "", role: "" ,fullName:""});
     const [formError, setFormError] = useState({ field: "", value: "" });
     const dispatch = useDispatch();
     const signUpData = useSelector((state) => state.auth);
@@ -31,6 +31,10 @@ const SignUp = () => {
 
         if (!formData.username) {
             setFormError({ field: "username", value: "Username is required." });
+            return;
+        }
+        if (!formData.fullName) {
+            setFormError({ field: "fullname", value: "Fullname is required." });
             return;
         }
         if (!formData.email) {
@@ -102,6 +106,15 @@ const SignUp = () => {
 
                             {/* Form */}
                             <form onSubmit={submitHandler} method='post' className="flex flex-col gap-3 w-full">
+                                 <input
+                                    type="text"
+                                    placeholder="Your full name"
+                                    value={formData.fullName}
+                                    onChange={handleChange}
+                                    name='fullname'
+                                    className="px-5 py-3 rounded-4xl   bg-[#E7F9FD]/40 focus:outline-none  focus:shadow"
+                                />
+                                {formError.field === "fullname" && <span className='text-sm text-red-500'>{formError.value}</span>}
                                 <input
                                     type="text"
                                     placeholder="Your name"

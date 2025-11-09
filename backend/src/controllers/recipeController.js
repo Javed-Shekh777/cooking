@@ -6,25 +6,42 @@ const Tag = require("../models/tagSchema");
 const { logUserActivity } = require("../helper/logUserActivity");
 const RecipeCategorySchema = require("../models/recipeCategorySchema");
 const mongoose = require("mongoose");
+const { generateSlug } = require("../helper/generateOTP");
 
 
 exports.addRecipe = async (req, res) => {
+
+  const uploadedAllMedia = [{ public_id: "", resource_type: "" }]; // for tracking uploads
   try {
 
     console.log("Files", req.files);
     console.log("Body", req.body);
 
-    const { title, description, categoryObjectId, nutrients, ingredients, directions: directionsRaw, prepTime, cookTime, servings, tags } = req.body;
+    const {
+      title,
+      description,
+      categoryObjectId,
+      nutrients,
+      ingredients,
+      directions: directionsRaw,
+      prepTime,
+      cookTime,
+      servings,
+      tags,
+      isPublished,
+      difficultyLevel
+    } = req.body;
 
-    if (!title || !description || !categoryObjectId || !prepTime || !cookTime || !servings) {
+    // Validate required fields
+    if (!title || !description || !categoryObjectId || !prepTime || !cookTime || !servings || !difficultyLevel) {
       return errorResponse(res, "All fields are required.");
     }
-    const categoryId = new mongoose.Types.ObjectId(categoryObjectId);
-    const parsedNutrients = JSON.parse(nutrients);
-    const parsedIngredients = JSON.parse(ingredients);
-    const parsedDirections = typeof directionsRaw === "string" ? JSON.parse(directionsRaw) : directionsRaw;
-    let directions = [];
+    const slug = generateSlug(title);
 
+    const categoryId = new mongoose.Types.ObjectId(categoryObjectId);
+    const parsedNutrients = JSON.parse(nutrients || "[]");
+    const parsedIngredients = JSON.parse(ingredients || "[]");
+    const parsedDirections = typeof directionsRaw === "string" ? JSON.parse(directionsRaw) : directionsRaw;
     const parsedTags = Array.isArray(tags) ? tags : JSON.parse(tags);
     const parsedPrepTime = typeof prepTime === "string" ? JSON.parse(prepTime) : prepTime;
     const parsedCookTime = typeof cookTime === "string" ? JSON.parse(cookTime) : cookTime;
@@ -33,8 +50,22 @@ exports.addRecipe = async (req, res) => {
     if (!parsedIngredients.length) return errorResponse(res, "Ingredients are required.");
     if (!parsedDirections.length) return errorResponse(res, "Directions are required.");
 
+    let directions = [];
+
+
+    if (!parsedPrepTime?.value || !parsedPrepTime?.unit) {
+      return errorResponse(res, "Prep time is invalid.");
+    }
+    if (!parsedCookTime?.value || !parsedCookTime?.unit) {
+      return errorResponse(res, "Cook time is invalid.");
+    }
+
     // Dish image
     let dishImage = {};
+    let dishVideo = {};
+
+
+
     if (req.files?.dishImage) {
       const cloures = await cloudinaryUpload(req.files.dishImage[0].buffer, cloudinaryFolderNames.images, "image");
       dishImage = {
@@ -42,10 +73,10 @@ exports.addRecipe = async (req, res) => {
         public_id: cloures.public_id,
         resource_type: cloures.resource_type
       };
+      uploadedAllMedia.push({ public_id: cloures.public_id, resource_type: cloures.resource_type });
     }
 
     // Dish video
-    let dishVideo = {};
     if (req.files?.dishVideo) {
       const cloures = await cloudinaryUpload(req.files.dishVideo[0].buffer, cloudinaryFolderNames.videos, "video");
       dishVideo = {
@@ -54,23 +85,78 @@ exports.addRecipe = async (req, res) => {
         resource_type: cloures.resource_type,
         height: cloures.height,
         width: cloures.width,
-        duration: cloures.duration
+        duration: cloures.duration,
+      };
+      uploadedAllMedia.push({ public_id: cloures.public_id, resource_type: cloures.resource_type });
+
+      const thumbnailUrl = `${cloures.secure_url}.jpg`; // Cloudinary auto-generates thumbnails
+      dishImage = {
+        url: thumbnailUrl,
+        publicId: videoPublicId,
+        resource_type: "image"
       };
     }
 
-    // Directions with images
+    // Handle directions with optional images
     for (let i = 0; i < parsedDirections.length; i++) {
       const step = parsedDirections[i];
       let stepImage = {};
+      let stepVideo = {};
+
+
+      // Check if image exists for this step
       if (req.files?.directionImages && req.files.directionImages[i]) {
-        const imgUpload = await cloudinaryUpload(req.files.directionImages[i].buffer, cloudinaryFolderNames.images, "image");
-        stepImage = {
-          url: imgUpload.secure_url,
-          public_id: imgUpload.public_id,
-          resource_type: imgUpload.resource_type
-        };
+        const imgBuffer = req.files.directionImages[i].buffer;
+
+        try {
+          const imgUpload = await cloudinaryUpload(
+            imgBuffer,
+            cloudinaryFolderNames.images,
+            "image"
+          );
+          uploadedAllMedia.push({ public_id: imgUpload.public_id, resource_type: imgUpload.resource_type });
+
+          stepImage = {
+            url: imgUpload.secure_url,
+            public_id: imgUpload.public_id,
+            resource_type: imgUpload.resource_type
+          };
+        } catch (err) {
+          console.error(`Image upload failed for step ${i + 1}:`, err.message);
+          return errorResponse(res, `Failed to upload image for step ${i + 1}`);
+        }
       }
-      directions.push({ ...step, image: stepImage });
+
+      if (req.files?.directionVideos && req.files.directionVideos[i]) {
+        const vidBuffer = req.files.directionVideos[i].buffer;
+
+        try {
+          const vidUpload = await cloudinaryUpload(
+            vidBuffer,
+            cloudinaryFolderNames.videos,
+            "video"
+          );
+          uploadedAllMedia.push({ public_id: vidUpload.public_id, resource_type: vidUpload.resource_type });
+
+          stepVideo = {
+            url: vidUpload.secure_url,
+            public_id: vidUpload.public_id,
+            resource_type: vidUpload.resource_type,
+            height: vidUpload.height,
+            width: vidUpload.width,
+            duration: vidUpload.duration,
+          };
+        } catch (err) {
+          console.error(`Image upload failed for step ${i + 1}:`, err.message);
+          return errorResponse(res, `Failed to upload image for step ${i + 1}`);
+        }
+      }
+
+      directions.push({
+        ...step,
+        stepImage: stepImage,
+        stepVideo: stepVideo
+      });
     }
 
 
@@ -94,6 +180,9 @@ exports.addRecipe = async (req, res) => {
       servings: Number(servings),
       dishImage,
       dishVideo,
+      isPublished,
+      difficultyLevel,
+      slug,
       tags: typeof tags === "string" ? JSON.parse(tags) : tags
     });
 
@@ -111,34 +200,56 @@ exports.addRecipe = async (req, res) => {
     return successResponse(res, "Recipe created successfully.", newDish);
 
   } catch (error) {
+    for (const media of uploadedAllMedia) {
+      if (media?.public_id) {
+        await cloudinaryDelete(media.public_id, media.resource_type);
+      }
+    }
+
     return errorResponse(res, error.message || "Recipe creation failed. Please try again.", 500);
   }
 };
 
 
 exports.updateRecipe = async (req, res) => {
+  let existingRecipe;
+  let allOldIds = [];
+  let uploadedAllMedia = [];
+  let mediaToDelete = [];
+  let newDishImage = null;
+  let newDishVideo = null;
+
   try {
     const { id } = req.params;
-    const existingRecipe = await Recipe.findById(id);
+    existingRecipe = await Recipe.findById(id);
     if (!existingRecipe) return errorResponse(res, "Recipe not found", 404);
 
     const {
       title,
       description,
+      categoryObjectId,
       nutrients,
       ingredients,
       directions: directionsRaw,
       prepTime,
       cookTime,
       servings,
-      tags
+      tags,
+      isPublished,
+      difficultyLevel
     } = req.body;
 
-    if (!title || !description || !prepTime || !cookTime || !servings) {
-      return errorResponse(res, "All required fields must be filled.");
+    if (!title || !description || !categoryObjectId || !prepTime || !cookTime || !servings || !difficultyLevel) {
+      return errorResponse(res, "All fields are required.");
     }
 
-    // ✅ Parse incoming JSON fields safely
+    console.log("Direction Images:", req.files?.directionImages?.length);
+    console.log("Direction Videos:", req.files?.directionVideos?.length);
+
+
+    const slug = generateSlug(title);
+    const categoryId = new mongoose.Types.ObjectId(categoryObjectId);
+
     const parsedNutrients = JSON.parse(nutrients || "[]");
     const parsedIngredients = JSON.parse(ingredients || "[]");
     const parsedDirections = typeof directionsRaw === "string" ? JSON.parse(directionsRaw) : directionsRaw || [];
@@ -149,92 +260,95 @@ exports.updateRecipe = async (req, res) => {
     if (!parsedNutrients.length) return errorResponse(res, "Nutrients are required.");
     if (!parsedIngredients.length) return errorResponse(res, "Ingredients are required.");
     if (!parsedDirections.length) return errorResponse(res, "Directions are required.");
+    if (!parsedPrepTime?.value || !parsedPrepTime?.unit) return errorResponse(res, "Prep time is invalid.");
+    if (!parsedCookTime?.value || !parsedCookTime?.unit) return errorResponse(res, "Cook time is invalid.");
 
-   // ======================
-// 🖼️ or 🎬  Handle Dish Media (Only One Should Exist)
-// ======================
-let dishImage = existingRecipe.dishImage;
-let dishVideo = existingRecipe.dishVideo;
+    const oldImageIds = existingRecipe.directions.map(d => d?.stepImage?.public_id).filter(Boolean);
+    const oldVideoIds = existingRecipe.directions.map(d => d?.stepVideo?.public_id).filter(Boolean);
+    const oldDishImageId = existingRecipe.dishImage?.public_id;
+    const oldDishVideoId = existingRecipe.dishVideo?.public_id;
 
-// 🧩 CASE 1: If new image uploaded
-if (req.files?.dishImage?.[0]) {
-  // 🔥 If there was any existing video, delete it first (only one allowed)
-  if (dishVideo?.public_id) {
-    await cloudinaryDelete(dishVideo.public_id, "video");
-    dishVideo = null;
-  }
+    allOldIds = [...oldImageIds, ...oldVideoIds, oldDishImageId, oldDishVideoId].filter(Boolean);
 
-  // 🔥 If there was an old image, delete it
-  if (dishImage?.public_id) {
-    await cloudinaryDelete(dishImage.public_id, "image");
-  }
+    newDishImage = existingRecipe.dishImage;
+    newDishVideo = existingRecipe.dishVideo;
 
-  const uploadRes = await cloudinaryUpload(
-    req.files.dishImage[0].buffer,
-    cloudinaryFolderNames.images,
-    "image"
-  );
+    // 🖼️ Dish Image Upload
+    if (req.files?.dishImage?.[0]) {
+      if (existingRecipe.dishVideo?.public_id) mediaToDelete.push({ public_id: existingRecipe.dishVideo.public_id, resource_type: "video" });
+      if (existingRecipe.dishImage?.public_id) mediaToDelete.push({ public_id: existingRecipe.dishImage.public_id, resource_type: "image" });
 
-  dishImage = {
-    url: uploadRes.secure_url,
-    public_id: uploadRes.public_id,
-    resource_type: uploadRes.resource_type,
-  };
-  dishVideo = null; // ✅ ensure video is removed in DB too
-}
+      const uploadRes = await cloudinaryUpload(req.files.dishImage[0].buffer, cloudinaryFolderNames.images, "image");
+      uploadedAllMedia.push({ public_id: uploadRes.public_id, resource_type: uploadRes.resource_type });
 
-// 🧩 CASE 2: If new video uploaded
-else if (req.files?.dishVideo?.[0]) {
-  // 🔥 If there was any existing image, delete it first (only one allowed)
-  if (dishImage?.public_id) {
-    await cloudinaryDelete(dishImage.public_id, "image");
-    dishImage = null;
-  }
+      newDishImage = {
+        url: uploadRes.secure_url,
+        public_id: uploadRes.public_id,
+        resource_type: uploadRes.resource_type
+      };
+      newDishVideo = null;
+    }
 
-  // 🔥 If there was an old video, delete it
-  if (dishVideo?.public_id) {
-    await cloudinaryDelete(dishVideo.public_id, "video");
-  }
+    // 🎬 Dish Video Upload
+    else if (req.files?.dishVideo?.[0]) {
+      if (existingRecipe.dishImage?.public_id) mediaToDelete.push({ public_id: existingRecipe.dishImage.public_id, resource_type: "image" });
+      if (existingRecipe.dishVideo?.public_id) mediaToDelete.push({ public_id: existingRecipe.dishVideo.public_id, resource_type: "video" });
 
-  const uploadRes = await cloudinaryUpload(
-    req.files.dishVideo[0].buffer,
-    cloudinaryFolderNames.videos,
-    "video"
-  );
+      const uploadRes = await cloudinaryUpload(req.files.dishVideo[0].buffer, cloudinaryFolderNames.videos, "video");
+      uploadedAllMedia.push({ public_id: uploadRes.public_id, resource_type: uploadRes.resource_type });
 
-  dishVideo = {
-    url: uploadRes.secure_url,
-    public_id: uploadRes.public_id,
-    resource_type: uploadRes.resource_type,
-    height: uploadRes.height,
-    width: uploadRes.width,
-    duration: uploadRes.duration,
-  };
-  dishImage = null; // ✅ ensure image is removed in DB too
-}
+      newDishVideo = {
+        url: uploadRes.secure_url,
+        public_id: uploadRes.public_id,
+        resource_type: uploadRes.resource_type,
+        height: uploadRes.height,
+        width: uploadRes.width,
+        duration: uploadRes.duration
+      };
+      // const videoUrl = uploadRes.secure_url;
 
-    // ======================
-    // 📸 Handle Directions
-    // ======================
+      // const thumbnailUrl = videoUrl.replace(
+      //   "/upload/",
+      //   "/upload/so_1,du_1,fl_thumbnail,w_600,h_600,c_fill/"
+      // );
+      // newDishImage = {
+      //   url: thumbnailUrl,
+      //   public_id: uploadRes.public_id, // same as video
+      //   resource_type: "video"
+      // };
+
+      newDishImage = null;
+
+
+    }
+
+    // 📸 Directions Media
     const updatedDirections = [];
-    let uploadIndex = 0;
+    let imgCounter = 0;
+    let vidCounter = 0;
 
     for (let i = 0; i < parsedDirections.length; i++) {
       const d = parsedDirections[i];
-      let stepImage = null;
+      let stepImage = {};
+      let stepVideo = {};
 
-      // CASE 1: User uploaded a NEW image
-      if (req.files?.directionImages && req.files.directionImages[uploadIndex]) {
-        // delete old if exist
-        if (d.existingPublicId) {
-          await cloudinaryDelete(d.existingPublicId, "image");
+      console.log(`Step ${i + 1} → hasNewImage:${d.hasNewImage}, hasNewVideo:${d.hasNewVideo}`);
+
+      // ---- IMAGE ----
+      if (d.hasNewImage && req.files?.directionImages?.[imgCounter]) {
+
+        if (d.existingImagePublicId) {
+          mediaToDelete.push({ public_id: d.existingImagePublicId, resource_type: "image" });
         }
 
         const uploadRes = await cloudinaryUpload(
-          req.files.directionImages[uploadIndex].buffer,
+          req.files.directionImages[imgCounter].buffer,
           cloudinaryFolderNames.images,
           "image"
         );
+
+        uploadedAllMedia.push(uploadRes);
+        imgCounter++; // ✅ increment only when new image exists
 
         stepImage = {
           url: uploadRes.secure_url,
@@ -242,68 +356,98 @@ else if (req.files?.dishVideo?.[0]) {
           resource_type: uploadRes.resource_type
         };
 
-        uploadIndex++;
-      }
-      // CASE 2: Keep old image
-      else if (d.existingPublicId) {
-        const old = existingRecipe.directions.find(
-          (x) => x.image?.public_id === d.existingPublicId
-        );
-        if (old) stepImage = old.image;
+      } else if (d.existingImagePublicId) {
+        stepImage = existingRecipe.directions.find(x => x.stepImage?.public_id === d.existingImagePublicId)?.stepImage || {};
       }
 
-      // CASE 3: No image (neither old nor new)
+      // ---- VIDEO ----
+      if (d.hasNewVideo && req.files?.directionVideos?.[vidCounter]) {
+
+        if (d.existingVideoPublicId) {
+          mediaToDelete.push({ public_id: d.existingVideoPublicId, resource_type: "video" });
+        }
+
+        const uploadRes = await cloudinaryUpload(
+          req.files.directionVideos[vidCounter].buffer,
+          cloudinaryFolderNames.videos,
+          "video"
+        );
+
+        uploadedAllMedia.push(uploadRes);
+        vidCounter++;
+
+        stepVideo = {
+          url: uploadRes.secure_url,
+          public_id: uploadRes.public_id,
+          resource_type: uploadRes.resource_type,
+          height: uploadRes.height,
+          width: uploadRes.width,
+          duration: uploadRes.duration
+        };
+
+      } else if (d.existingVideoPublicId) {
+        stepVideo = existingRecipe.directions.find(x => x.stepVideo?.public_id === d.existingVideoPublicId)?.stepVideo || {};
+      }
+
       updatedDirections.push({
-        stepNumber: d.stepNumber || i + 1,
+        stepNumber: i + 1,
         heading: d.heading,
         description: d.description,
-        image: stepImage
+        stepImage,
+        stepVideo
       });
     }
 
-    // ======================
-    // 🧾 Update Recipe in DB
-    // ======================
+
+    // ✅ Final DB Update
     const updatedRecipe = await Recipe.findByIdAndUpdate(
       id,
       {
         title,
         description,
+        categoryObjectId: categoryId,
         ingredients: parsedIngredients,
         nutrients: parsedNutrients,
         directions: updatedDirections,
-        prepTime: {
-          value: Number(parsedPrepTime.value),
-          unit: parsedPrepTime.unit
-        },
-        cookTime: {
-          value: Number(parsedCookTime.value),
-          unit: parsedCookTime.unit
-        },
+        prepTime: { value: Number(parsedPrepTime.value), unit: parsedPrepTime.unit },
+        cookTime: { value: Number(parsedCookTime.value), unit: parsedCookTime.unit },
         servings: Number(servings),
-        dishImage,
-        dishVideo,
-        tags: parsedTags
+        dishImage: newDishImage,
+        dishVideo: newDishVideo,
+        tags: parsedTags,
+        isPublished,
+        slug,
+        difficultyLevel
       },
       { new: true }
     );
 
+    // 🧹 Delete old media after successful update
+    for (const media of mediaToDelete) {
+      await cloudinaryDelete(media.public_id, media.resource_type);
+      console.log(JSON.stringify(media), " Deleted");
+    }
+
     await logUserActivity(req.user._id, "RECIPE_UPDATED", req);
 
-    // 🏷️ Upsert tags
     for (let tag of parsedTags) {
       await Tag.updateOne({ name: tag }, { name: tag }, { upsert: true });
     }
 
     return successResponse(res, "Recipe updated successfully.", updatedRecipe);
   } catch (error) {
-    return errorResponse(
-      res,
-      error.message || "Recipe update failed. Please try again.",
-      500
-    );
+    console.error("Update failed:", error.message);
+
+    for (const media of uploadedAllMedia) {
+      if (media?.public_id && !allOldIds.includes(media.public_id)) {
+        await cloudinaryDelete(media.public_id, media.resource_type);
+      }
+    }
+
+    return errorResponse(res, "Recipe update failed. Uploaded media has been cleaned up.", 500);
   }
 };
+
 
 
 
@@ -484,7 +628,7 @@ exports.getCategories = async (req, res) => {
   try {
     const categories = await RecipeCategorySchema.find();
     if (categories.length <= 0) {
-      return errorResponse(res,  "Category fetch failed.", 401);
+      return errorResponse(res, "Category fetch failed.", 401);
     }
     return successResponse(res, "Category fetched.", categories);
   } catch (error) {
@@ -497,16 +641,57 @@ exports.getCategories = async (req, res) => {
 
 exports.getRecipes = async (req, res) => {
   try {
-    const recipes = await Recipe.find();
-    if (recipes.length <= 0) {
-      return errorResponse(res, error.message || "Recipes fetch failed.", 401);
+    const { categoryId } = req.query;
+
+    console.log(categoryId);
+
+    let filter = {};
+    if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
+      filter.categoryId = categoryId;
     }
-    return successResponse(res, "Recipes fetched.", recipes);
+
+    const recipes = await Recipe.find(filter);
+
+    console.log(recipes)
+
+    if (!recipes || recipes.length === 0) {
+      return successResponse(res, "No recipes found.", []);
+    }
+
+
+
+    return successResponse(res, "Recipes fetched successfully.", recipes);
+  } catch (error) {
+    return errorResponse(res, error.message || "Failed to fetch recipes.", 500);
+  }
+};
+
+
+
+exports.getRecipesByCategory = async (req, res) => {
+  try {
+    const id = req.params?.id || req.body?.id;
+
+    console.log(id);
+
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return errorResponse(res, "Invalid or missing category ID.", 400);
+    }
+
+    // const catId = new mongoose.Types.ObjectId(id);
+    const recipes = await Recipe.find({ categoryId: id }).populate({ path: "categoryId", select: "name icon" });
+
+    console.log(recipes)
+
+    if (!recipes || recipes.length === 0) {
+      return errorResponse(res, "No recipes found for this category.", 404);
+    }
+
+    return successResponse(res, "Recipes fetched successfully.", recipes);
   } catch (error) {
     return errorResponse(res, error.message || "Recipes fetch failed.", 500);
-
   }
-}
+};
 
 
 exports.getRecipe = async (req, res) => {
@@ -514,6 +699,9 @@ exports.getRecipe = async (req, res) => {
 
     console.log(req.body?.id, req?.params?.id);
     const id = req.body ? req?.body?.id : req.params?.id;
+    if (!id) {
+      return errorResponse(res, "Recipe ID is required.", 400);
+    }
 
     const recipe = await Recipe.findById(id).populate({
       path: "author",
@@ -527,6 +715,28 @@ exports.getRecipe = async (req, res) => {
     return successResponse(res, "Recipe fetched successfully.", recipe);
   } catch (error) {
     return errorResponse(res, error.message || "Recipe fetch failed.", 500);
+  }
+};
+
+
+exports.getCategory = async (req, res) => {
+  try {
+
+    console.log(req.body?.id, req?.params?.id);
+    const id = req.body ? req?.body?.id : req.params?.id;
+    if (!id) {
+      return errorResponse(res, "Category ID is required.", 400);
+    }
+
+    const category = await RecipeCategorySchema.findById(id);
+
+    if (!category) {
+      return errorResponse(res, "Category not found.", 404);
+    }
+
+    return successResponse(res, "Category fetched successfully.", category);
+  } catch (error) {
+    return errorResponse(res, error.message || "Category fetch failed.", 500);
   }
 };
 

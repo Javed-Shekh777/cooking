@@ -2,7 +2,7 @@ import React from 'react'
 
 const MailBox = () => {
     return (
-        <div className="bg-[#E7F9FD] relative rounded-4xl py-20 sm:mx-10 sm:px-5 px-2 flex items-center flex-col sm:gap-y-5 gap-y-10  ">
+        <div className="bg-[#E7F9FD] relative rounded-4xl py-20 sm:mx-10 sm:px-5 px-2 flex items-center flex-col sm:gap-y-5 gap-y-10 no-print ">
             <h1 className='title text-4xl font-semibold text-center  relative z-20 '>Deliciousness to your inbox</h1>
             <p className='text-center sm:w-[50%] self-center  relative z-20'>Lorem ipsum dolor sit amet, consectetuipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqut enim ad minim </p>
 

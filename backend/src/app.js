@@ -8,8 +8,9 @@ const errorHandler = require("./util/errorHandler");
 const authRoute = require("./routes/authRoute");
 const recipeRoute = require("./routes/recipeRoute");
 const Schh = require("./models/recipeCategorySchema");
+const path = require("path");
 
- 
+
 
 // default 
 app.use(helmet());
@@ -31,6 +32,9 @@ const corsOptionsDelegate = (req, callback) => {
 app.use(cors(corsOptionsDelegate));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/images', express.static(path.join(__dirname, 'images')));
+
+
 
 app.use(cookieParser());
 

@@ -141,9 +141,10 @@ const Home = () => {
 
     return (
         <main>
-            <section className="max-w-screen-xl mx-auto px-4 md:px-8 py-12">
+             
+            <section className="max-w-screen-xl mx-auto px-4  py-14">
                 <div className="flex items-center justify-between mb-8">
-                    <h2 className="sm:text-3xl text-lg font-bold text-gray-800">🍽️ Explore Categories</h2>
+                    <h2 className="sm:text-3xl text-lg font-bold text-gray-800">🍽️ Categories</h2>
                     <Link
                         to="/all-category"
                         className="bg-blue-100 text-blue-600 hover:bg-blue-200 transition sm:px-4 px-2.5 py-2 rounded-md text-sm font-medium"
@@ -152,36 +153,37 @@ const Home = () => {
                     </Link>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                     {categories?.length > 0 ? (
-                    categories.map((cat) => (
-                        <Link
-                            to={`/category/${cat.name.toLowerCase()}`}
-                            className="group block rounded-lg p-3 overflow-hidden shadow hover:shadow-lg transition duration-300"
-                        >
-                            <div className="relative w-full h-48 ">
-                                <img
-                                    src={cat.image?.url || "/placeholder.jpg"}
-                                    alt={cat.name}
-                                    className="w-full h-[200px] object-cover rounded-lg"
-                                />
-                                <div className="absolute top-3 right-3 bg-white p-2 rounded-full shadow-md text-blue-500 text-xl">
-                                    {cat.icon}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-14">
+                    {categories?.length > 0 ? (
+                        categories.map((cat) => (
+                            <Link
+                                key={cat.name}
+                             to={`/category/${cat._id}`}
+                                className="group flex flex-col items-center text-center gap-5"
+                            >
+                                <div className="w-full max-w-[140px] sm:max-w-[180px] aspect-square rounded-full overflow-hidden shadow-md hover:shadow-lg transition duration-300">
+                                    <img
+                                        src={cat.image?.url || "/placeholder.jpg"}
+                                        alt={cat.name}
+                                        className="w-full h-full object-cover"
+                                    />
                                 </div>
-                            </div>
 
-                            <div className="bg-white p-4 text-center">
-                                <h3 className="text-lg font-semibold text-gray-800 group-hover:text-blue-600 transition">
-                                    {cat.name}
-                                </h3>
-                                <p className="text-sm text-gray-500 mt-1">{cat.count} recipes</p>
-                            </div>
-                        </Link>
-                    ))
-                ) : (
-                    <p className="text-center col-span-full text-gray-500">No categories found.</p>
-                )}
+                                <div className="flex items-center hover:shadow-2xl rounded p-2 bg-slate-100/50 group-hover:bg-slate-200 gap-3">
+                                    <div className="bg-white p-2 rounded-full shadow text-blue-500 text-lg">
+                                        {cat.icon}
+                                    </div>
+                                    <h3 className="text-base sm:text-lg font-semibold text-gray-800 group-hover:text-blue-600 transition">
+                                        {cat.name}
+                                    </h3>
+                                </div>
+                            </Link>
+                        ))
+                    ) : (
+                        <p className="text-center col-span-full text-gray-500">No categories found.</p>
+                    )}
                 </div>
+
             </section>
 
 

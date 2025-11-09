@@ -12,6 +12,18 @@ const generateNumOTP = (length = 6) =>{
 };
 
 
-module.exports = { generateNumOTP};
+const generateSlug = (title) => {
+  const baseSlug = title
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-");
+
+  const uniqueSuffix = Date.now(); // or use shortid/nanoid
+  return `${baseSlug}-${uniqueSuffix}`;
+};
+
+
+module.exports = { generateNumOTP,generateSlug};
 
 

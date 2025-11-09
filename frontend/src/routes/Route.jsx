@@ -19,6 +19,10 @@ import AllCategory from "../pages/cooker/AllCategory";
 import AllCategories from "../pages/AllCategory";
 import Setting from "../pages/cooker/Setting";
 import Recipes from "../pages/Recipes";
+import CategoryRecipe from "../pages/CategoryRecipe";
+import Profile from "../pages/Profile";
+import Favorites from "../pages/Favourites";
+import About from "../pages/About";
 
 const router = createBrowserRouter([
     {
@@ -36,6 +40,13 @@ const router = createBrowserRouter([
                     { path: "recipes", element: <Recipes /> },
                     { path: "blog/:id", element: <BlogPost /> },
                     { path: "all-category", element: <AllCategories /> },
+                    { path: "category/:categoryId", element: <CategoryRecipe /> },
+                    { path: "category/:categoryId/recipe/:recipeId", element: <RecipeDetails /> },
+                    { path: "profile", element: <Profile /> },
+                    { path: "favourites", element: <Favorites /> },
+                    { path: "about", element: <About /> },
+
+
 
                 ],
             },
@@ -52,7 +63,8 @@ const router = createBrowserRouter([
                     { path: "recipe/add", element: <AddReceipie mode="add" /> },
                     { path: "recipe/edit/:id", element: <AddReceipie mode="edit" /> },
                     { path: "all-recipes", element: <AllRecipes /> },
-                    { path: "all-category", element: <AllCategory /> },
+                    { path: "all-category", element: <AllCategory mode="add" /> },
+                    { path: "all-category/edit/:id", element: <AllCategory mode="edit"  /> },
                     { path: "setting", element: <Setting /> },
 
 

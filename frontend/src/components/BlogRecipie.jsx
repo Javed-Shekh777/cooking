@@ -1,26 +1,30 @@
 import React from 'react';
 import { RiArrowRightWideLine } from 'react-icons/ri'
+import { Link } from 'react-router-dom';
 
 export const BlogRecipie = () => {
     return (
-        <div className="recipGroup items-center xl:flex-row flex-col flex gap-x-6 gap-y-3 sm:px-5 py-3">
-            <div className="leftGroup xl:w-auto w-full">
-                <img src="/reciepies/image 26.jpg" alt="" className='rounded-2xl h-full w-full' />
-            </div>
-            <div className="rightGroup lg:w-auto w-full flex flex-col gap-y-2.5 ">
-                <h3 className='text-2xl font-semibold'>Crochet Projects for Noodle Lovers</h3>
-                <p className='text-[17px]'>Lorem ipsum dolor sit amet, consectetuipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqut enim </p>
-                <div className="formWrapper flex  items-center flex-row     ">
-                    <div className="flex    items-center gap-x-3 mr-5  ">
-                        <img src="/profile/Ellipse2.jpg" alt="" className="image" />
-                        <span className='whitespace-nowrap'>John Smith</span>
-                    </div>
-                    <div className=" px-5 border-l-2 border-l-[rgba(0,0,0,0.1)]">
-                        <p className='whitespace-nowrap'>15 March 2022</p>
+        <Link to={'/blog/1232'}>
+            <div className="recipGroup items-center xl:flex-row flex-col flex gap-x-6 gap-y-3 sm:px-5 py-3">
+                <div className="leftGroup xl:w-auto w-full">
+                    <img src="/reciepies/image 26.jpg" alt="" className='rounded-2xl h-full w-full' />
+                </div>
+                <div className="rightGroup lg:w-auto w-full flex flex-col gap-y-2.5 ">
+                    <h3 className='text-2xl font-semibold'>Crochet Projects for Noodle Lovers</h3>
+                    <p className='text-[17px]'>Lorem ipsum dolor sit amet, consectetuipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqut enim </p>
+                    <div className="formWrapper flex  items-center flex-row     ">
+                        <div className="flex    items-center gap-x-3 mr-5  ">
+                            <img src="/profile/Ellipse2.jpg" alt="" className="image" />
+                            <span className='whitespace-nowrap'>John Smith</span>
+                        </div>
+                        <div className=" px-5 border-l-2 border-l-[rgba(0,0,0,0.1)]">
+                            <p className='whitespace-nowrap'>15 March 2022</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </Link>
+
     )
 }
 

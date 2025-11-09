@@ -53,15 +53,22 @@ const cloudinaryUpload = (buffer, folder, resourceType = "image") => {
 };
 
 // ✅ Delete file
-const cloudinaryDelete = async (public_id, fileType = "image") => {
+const cloudinaryDelete = async (public_id, resource_type = "image") => {
+  if (!public_id) {
+    console.warn("cloudinaryDelete called without public_id");
+    return;
+  }
+
   try {
     const res = await cloudinary.uploader.destroy(public_id, {
-      resource_type: fileType
+      resource_type
     });
     return res;
   } catch (error) {
+    console.error("Cloudinary delete failed:", error);
     throw new Error(error.message);
   }
 };
+
 
 module.exports = { cloudinaryUpload, cloudinaryDelete };
