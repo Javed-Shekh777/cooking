@@ -141,7 +141,7 @@ const Navbar = () => {
                                 </ul>}
                                 {/* <FaImage size={22} /> */}
                             </li>
-                            : <li className={`memuItem px-4 py-2   rounded-md  duration-300 transition-all ${pathname === '/sign-up' && 'text-[#FF7967]'} bg-black/70 hover:bg-black text-white `}><a href="/sign-in ">Sign In</a></li>
+                            : <li className={`memuItem px-4 py-2 md:hidden  rounded-md  duration-300 transition-all ${pathname === '/sign-up' && 'text-[#FF7967]'} bg-black/70 hover:bg-black text-white `}><a href="/sign-in ">Sign In</a></li>
                         }
                     </div>
                     <div className="md:hidden relative ">

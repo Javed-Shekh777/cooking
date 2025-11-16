@@ -10,16 +10,18 @@ const categorySchema = new mongoose.Schema({
   },
   description: {
     type: String,
-    trim: true,        // short description about the category
+    trim: true,
   },
-  image: {
+  
+  // ✅ FIX: 'image' को 'categoryImage' में बदला गया
+  categoryImage: { 
     url: { type: String },          // optional image URL
     public_id: { type: String },    // cloudinary public_id if using cloudinary
   },
-  icon: { type: String },          // react icon name or class
+  
+  icon: { type: String },          // emoji or icon string
   count: { type: Number, default: 0 }  // number of recipes in this category
 }, { timestamps: true });
 
 module.exports = mongoose.model(SchemaName.recipeCategory, categorySchema);
-
 

@@ -12,6 +12,8 @@ const replySchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  likes: [{ type: mongoose.Types.ObjectId, ref: SchemaName.user }],
+
   createdAt: {
     type: Date,
     default: Date.now

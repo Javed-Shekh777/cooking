@@ -84,11 +84,11 @@ const recipeSchema = new mongoose.Schema(
         trim: true
       }
     ],
-   difficultyLevel: {
-  type: String,
-  enum: ["EASY", "MEDIUM", "HARD"],
-  required: true
-},
+    difficultyLevel: {
+      type: String,
+      enum: ["EASY", "MEDIUM", "HARD"],
+      required: true
+    },
     estimatedCost: {
       type: Number, // or String like "₹200"
     },
@@ -96,10 +96,16 @@ const recipeSchema = new mongoose.Schema(
     commentsCount: { type: Number, default: 0 },
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
 
-    likes: [{ type: mongoose.Types.ObjectId, ref: SchemaName.user }],
-    views: [{ type: mongoose.Types.ObjectId, ref: SchemaName.user }],
-    shares: [{ type: mongoose.Types.ObjectId, ref: SchemaName.user }],
-    ratings: [{ user: { type: mongoose.Types.ObjectId, ref: SchemaName.user }, value: { type: Number, min: 1, max: 5 }, comment: String }]
+    // likes: { type: Number, default: 0 },
+    // views: { type: Number, default: 0 },
+    // shares: { type: Number, default: 0 },
+    ratings: [{
+      user: { type: mongoose.Types.ObjectId, ref: SchemaName.user },
+      value: { type: Number, min: 1, max: 5 },
+      comment: String
+    }],
+    avgRating: { type: Number, default: 0 },
+    totalRatings: { type: Number, default: 0 },
 
   },
   { timestamps: true }

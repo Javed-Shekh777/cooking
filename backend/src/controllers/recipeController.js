@@ -2,6 +2,11 @@ const { cloudinaryFolderNames } = require("../constants");
 const { cloudinaryUpload, cloudinaryDelete } = require("../util/cloudinary");
 const { errorResponse, successResponse } = require("../util/response");
 const Recipe = require("../models/recipeSchema");
+const User = require("../models/userModel");
+const RecipeLikeShareModel = require("../models/recipeLikes");
+const RecipeCommentModel = require("../models/recipeCommentShema");
+
+
 const Tag = require("../models/tagSchema");
 const { logUserActivity } = require("../helper/logUserActivity");
 const RecipeCategorySchema = require("../models/recipeCategorySchema");
@@ -14,8 +19,6 @@ exports.addRecipe = async (req, res) => {
   const uploadedAllMedia = [{ public_id: "", resource_type: "" }]; // for tracking uploads
   try {
 
-    console.log("Files", req.files);
-    console.log("Body", req.body);
 
     const {
       title,
@@ -243,8 +246,6 @@ exports.updateRecipe = async (req, res) => {
       return errorResponse(res, "All fields are required.");
     }
 
-    console.log("Direction Images:", req.files?.directionImages?.length);
-    console.log("Direction Videos:", req.files?.directionVideos?.length);
 
 
     const slug = generateSlug(title);
@@ -332,7 +333,7 @@ exports.updateRecipe = async (req, res) => {
       let stepImage = {};
       let stepVideo = {};
 
-      console.log(`Step ${i + 1} → hasNewImage:${d.hasNewImage}, hasNewVideo:${d.hasNewVideo}`);
+      // console.log(`Step ${i + 1} → hasNewImage:${d.hasNewImage}, hasNewVideo:${d.hasNewVideo}`);
 
       // ---- IMAGE ----
       if (d.hasNewImage && req.files?.directionImages?.[imgCounter]) {
@@ -425,7 +426,6 @@ exports.updateRecipe = async (req, res) => {
     // 🧹 Delete old media after successful update
     for (const media of mediaToDelete) {
       await cloudinaryDelete(media.public_id, media.resource_type);
-      console.log(JSON.stringify(media), " Deleted");
     }
 
     await logUserActivity(req.user._id, "RECIPE_UPDATED", req);
@@ -436,7 +436,6 @@ exports.updateRecipe = async (req, res) => {
 
     return successResponse(res, "Recipe updated successfully.", updatedRecipe);
   } catch (error) {
-    console.error("Update failed:", error.message);
 
     for (const media of uploadedAllMedia) {
       if (media?.public_id && !allOldIds.includes(media.public_id)) {
@@ -447,7 +446,6 @@ exports.updateRecipe = async (req, res) => {
     return errorResponse(res, "Recipe update failed. Uploaded media has been cleaned up.", 500);
   }
 };
-
 
 
 
@@ -493,7 +491,6 @@ exports.deleteRecipe = async (req, res) => {
 
     return successResponse(res, "Recipe deleted successfully.");
   } catch (error) {
-    console.error("Recipe deletion failed:", error);
     return errorResponse(res, error.message || "Recipe deletion failed", 500);
   }
 };
@@ -503,15 +500,12 @@ exports.deleteRecipe = async (req, res) => {
 exports.suggestTags = async (req, res) => {
   try {
 
-    console.log(req.query);
     const search = req.query?.search || "";
-    console.log(search);
 
     const tags = await Tag.find({
       name: { $regex: search, $options: "i" }
     }).select("name").limit(10);
 
-    console.log("Tags:", tags);
 
     if (!tags.length) {
       return errorResponse(res, "Tags not found.", 404);
@@ -530,8 +524,7 @@ exports.suggestTags = async (req, res) => {
 
 exports.addCategory = async (req, res) => {
   try {
-    console.log("Body:", req.body);
-    console.log("File:", req.file);
+
 
     const { name, description, icon } = req.body;
 
@@ -573,10 +566,116 @@ exports.addCategory = async (req, res) => {
 
     return successResponse(res, "Category saved successfully.", category);
   } catch (error) {
-    console.error(error);
     return errorResponse(res, error.message || "Category creation failed.", 500);
   }
 };
+
+
+
+exports.updateCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, icon, oldPublicId } = req.body;
+    const newFile = req.file;
+
+    const existingCategory = await RecipeCategorySchema.findOne({ name });
+    if (existingCategory && existingCategory._id.toString() !== id) {
+      return errorResponse(res, "This category name is already in use by another category.", 400);
+    }
+
+    const category = await RecipeCategorySchema.findById(id);
+    if (!category) {
+      return errorResponse(res, "Category not found.", 404);
+    }
+
+    const updateData = {
+      description,
+      name,
+      icon,
+    };
+
+    if (newFile) {
+      const cloud = await cloudinaryUpload(newFile.buffer, cloudinaryFolderNames.images, "image");
+
+      if (cloud?.secure_url) {
+        if (category?.categoryImage?.public_id) {
+          await cloudinaryDelete(category.categoryImage.public_id, "image");
+        }
+        updateData.categoryImage = { url: cloud.secure_url, public_id: cloud.public_id };
+      } else {
+        return errorResponse(res, "Image upload to Cloudinary failed.", 500);
+      }
+
+    } else if (req.body.categoryImage === "" && category.categoryImage?.public_id) {
+      await cloudinaryDelete(category.categoryImage.public_id, "image");
+      updateData.categoryImage = null;
+    }
+
+
+
+    const updatedCategory = await RecipeCategorySchema.findByIdAndUpdate(
+      id,
+      updateData,
+      {
+        new: true,
+        runValidators: true, // इसे वापस चालू करें
+        useFindAndModify: false // इसे false पर सेट करें
+      }
+    );
+    if (!updatedCategory) {
+      return errorResponse(res, "Category not found after update.", 404);
+    }
+
+    return successResponse(res, "Category updated successfully", updatedCategory);
+
+  } catch (error) {
+    console.error("Update category error:", error);
+    if (error.code === 11000) {
+      return errorResponse(res, "This category name is already in use.", 400);
+    }
+    return errorResponse(res, error.message || "Category update failed.", 500);
+  }
+};
+
+
+
+exports.getRecommendedRecipes = async (req, res) => {
+  try {
+
+    const { recipeId, categoryId, limit } = req.query;
+
+    console.log("Received recipeId:", recipeId);
+    console.log("Received categoryId:", categoryId);
+
+    let query = {};
+
+    if (categoryId && categoryId !== 'All') { // 'All' जैसी डिफ़ॉल्ट वैल्यू को अनदेखा करें यदि आवश्यक हो
+      query.categoryId = categoryId;
+    }
+
+    if (recipeId && recipeId !== 'null' && recipeId !== 'undefined') {
+      query._id = { $ne: recipeId };
+    }
+
+
+    console.log("Final MongoDB Query:", query);
+
+
+    const recommendations = await Recipe.find()
+      .limit(limit || 8) // केवल 8 परिणाम वापस करें
+      .select("title dishImage rating prepTime cookTime ratings difficultyLevel tags avgRating")
+      .lean(); // तेज़ प्रदर्शन के लिए .lean() का उपयोग करें
+
+    console.log(`Found ${recommendations.length} recommendations.`);
+    return successResponse(res, "Recommendations fetched", recommendations);
+
+  } catch (error) {
+    console.error("Error in getRecommendedRecipes:", error);
+    return errorResponse(res, error.message || "Failed to fetch recommendations.", 500);
+  }
+};
+
+
 
 
 exports.deleteCategoryCascade = async (req, res) => {
@@ -617,11 +716,9 @@ exports.deleteCategoryCascade = async (req, res) => {
 
     return successResponse(res, "Category and all related recipes deleted successfully.");
   } catch (error) {
-    console.error("Cascade deletion failed:", error);
     return errorResponse(res, error.message || "Cascade deletion failed", 500);
   }
 };
-
 
 
 exports.getCategories = async (req, res) => {
@@ -638,12 +735,10 @@ exports.getCategories = async (req, res) => {
 }
 
 
-
 exports.getRecipes = async (req, res) => {
   try {
     const { categoryId } = req.query;
 
-    console.log(categoryId);
 
     let filter = {};
     if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
@@ -652,7 +747,6 @@ exports.getRecipes = async (req, res) => {
 
     const recipes = await Recipe.find(filter);
 
-    console.log(recipes)
 
     if (!recipes || recipes.length === 0) {
       return successResponse(res, "No recipes found.", []);
@@ -667,12 +761,9 @@ exports.getRecipes = async (req, res) => {
 };
 
 
-
 exports.getRecipesByCategory = async (req, res) => {
   try {
     const id = req.params?.id || req.body?.id;
-
-    console.log(id);
 
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return errorResponse(res, "Invalid or missing category ID.", 400);
@@ -681,7 +772,6 @@ exports.getRecipesByCategory = async (req, res) => {
     // const catId = new mongoose.Types.ObjectId(id);
     const recipes = await Recipe.find({ categoryId: id }).populate({ path: "categoryId", select: "name icon" });
 
-    console.log(recipes)
 
     if (!recipes || recipes.length === 0) {
       return errorResponse(res, "No recipes found for this category.", 404);
@@ -693,16 +783,16 @@ exports.getRecipesByCategory = async (req, res) => {
   }
 };
 
+ 
 
 exports.getRecipe = async (req, res) => {
   try {
-
-    console.log(req.body?.id, req?.params?.id);
-    const id = req.body ? req?.body?.id : req.params?.id;
+    const id = req.body?.id || req.params?.id;
     if (!id) {
       return errorResponse(res, "Recipe ID is required.", 400);
     }
 
+    const userId = req.user?._id;
     const recipe = await Recipe.findById(id).populate({
       path: "author",
       select: "profilePic username email"
@@ -711,18 +801,38 @@ exports.getRecipe = async (req, res) => {
     if (!recipe) {
       return errorResponse(res, "Recipe not found.", 404);
     }
+    const likeMeta = await RecipeLikeShareModel.findOne({ recipeId: id });
 
-    return successResponse(res, "Recipe fetched successfully.", recipe);
+    const likedUserIds = likeMeta?.likes.map(id => id.toString()) || [];
+    const savedUserIds = likeMeta?.saves.map(id => id.toString()) || [];
+
+    const isLiked = likedUserIds.includes(userId?.toString());
+    const isSaved = savedUserIds.includes(userId?.toString());
+
+
+
+
+    return successResponse(res, "Recipe found", {
+      recipe,
+      meta: {
+        isLiked: isLiked,
+        isSaved: isSaved,
+        likesCount: likeMeta?.likes.length || 0,
+        savesCount: likeMeta?.saves.length || 0,
+        viewsCount: likeMeta?.views.length || 0,
+        sharesCount: likeMeta?.shares.length || 0,
+      }
+    });
   } catch (error) {
     return errorResponse(res, error.message || "Recipe fetch failed.", 500);
   }
 };
 
 
+
 exports.getCategory = async (req, res) => {
   try {
 
-    console.log(req.body?.id, req?.params?.id);
     const id = req.body ? req?.body?.id : req.params?.id;
     if (!id) {
       return errorResponse(res, "Category ID is required.", 400);
@@ -769,7 +879,281 @@ exports.dashboard = async (req, res) => {
     return successResponse(res, "Dashboard data fetched successfully", data);
 
   } catch (error) {
-    console.error("Dashboard Error:", error);
     return errorResponse(res, "Internal Server Error", 500, error);
   }
 };
+
+
+// commentsController.js
+
+exports.getComments = async (req, res) => {
+  try {
+    console.log("Req Params ID:", req.params.id);
+    const recipeId = req?.params?.id || req?.body?.id || req?.query?.id;
+
+    console.log(recipeId);
+
+    if (!recipeId) {
+      console.log("Error: Recipe ID not received!");
+      return errorResponse(res, "Recipe ID is required.", 400);
+    }
+
+
+
+    const comments = await RecipeCommentModel.find({ recipeId })
+      .populate("user", "username profileImage")
+      .populate("replies.user", "username profileImage")
+      .sort({ createdAt: -1 });
+
+    console.log(comments);
+
+    return successResponse(res, "Comments fetched", comments);
+  } catch (error) {
+    return errorResponse(res, "Failed to fetch comments.", 500);
+  }
+};
+
+
+
+
+exports.addComment = async (req, res) => {
+  try {
+    console.log(req?.body);
+    const { recipeId, text, parentId } = req.body; // ✅ parentId प्राप्त करें
+    const userId = req.user._id;
+
+    if (parentId) {
+      const parentComment = await RecipeCommentModel.findById(parentId);
+      if (!parentComment) {
+        return errorResponse(res, "Parent comment not found.", 404);
+      }
+
+      const newReply = {
+        user: userId,
+        text,
+        createdAt: new Date()
+      };
+
+      parentComment.replies.push(newReply);
+      await parentComment.save();
+
+      const updatedComment = await RecipeCommentModel.findById(parentId)
+        .populate("user", "username profileImage")
+        .populate("replies.user", "username profileImage");
+
+      return successResponse(res, "Reply added successfully", updatedComment); // ✅ पूरा अपडेटेड कमेंट भेजें
+
+    } else {
+      // केस 2: यह एक नई मुख्य टिप्पणी है (आपका मौजूदा लॉजिक)
+      const newComment = new RecipeCommentModel({
+        recipeId, user: userId, text
+      });
+      await newComment.save();
+      await newComment.populate("user", "username profilePic");
+      return successResponse(res, "Comment added successfully", newComment);
+    }
+  } catch (error) {
+    return errorResponse(res, "Failed to add comment/reply.", 500);
+  }
+};
+
+
+
+
+
+
+exports.toggleCommentLike = async (req, res) => {
+  try {
+    console.log("Req Params ID:", req.params.id);
+    const commentId = req?.params?.id || req?.body?.id || req?.query?.id;
+
+    console.log(commentId);
+
+    if (!commentId) {
+      console.log("Error: Recipe ID not received!");
+      return errorResponse(res, "Recipe ID is required.", 400);
+    }
+
+    const userId = req?.user?._id;
+
+
+    const comment = await RecipeCommentModel.findById(commentId);
+
+    if (!comment) {
+      return errorResponse(res, "Comment not found.", 404);
+    }
+
+    const userIdStr = userId.toString();
+    const liked = comment.likes.map(id => id.toString()).includes(userIdStr);
+
+    if (liked) {
+      comment.likes = comment.likes.filter(id => id.toString() !== userIdStr);
+    } else {
+      comment.likes.push(userId);
+    }
+
+    await comment.save();
+
+    return successResponse(res, "Comment like status updated", {
+      commentId,
+      updatedLikesArray: comment.likes, // पूरा एरे भेजा जा रहा है
+    });
+
+  } catch (error) {
+    return errorResponse(res, "Failed to like comment.", 500);
+  }
+};
+
+
+
+exports.recipeLike = async (req, res) => {
+  try {
+    const { recipeId } = req.body;
+    const userId = req.user._id;
+
+    let meta = await RecipeLikeShareModel.findOne({ recipeId });
+
+    if (!meta) {
+      meta = new RecipeLikeShareModel({ recipeId });
+    }
+
+    const isLiked = meta.likes.includes(userId);
+
+    if (isLiked) {
+      // Un-like: user ID हटा दें
+      meta.likes = meta.likes.filter(id => id.toString() !== userId.toString());
+    } else {
+      // Like: user ID जोड़ दें
+      meta.likes.push(userId);
+    }
+
+    await meta.save();
+
+    // सुनिश्चित करें कि आप अपडेटेड मेटाडेटा वापस भेजें
+    return successResponse(res, "Recipe like status updated", {
+      isLiked: !isLiked, // नया स्टेटस
+      likesCount: meta.likes.length, // नया काउंट
+    });
+
+  } catch (error) {
+    return errorResponse(res, "Like operation failed.", 500);
+  }
+};
+
+
+exports.recipeShare = async (req, res) => {
+  try {
+    const { recipeId } = req.body;
+    const userId = req.user._id;
+
+    let doc = await RecipeLikeShareModel.findOneAndUpdate(
+      { recipeId },
+      { $addToSet: { shares: userId } },
+      { new: true, upsert: true }
+    );
+
+    return successResponse(res, "Share counted.", {
+      sharesCount: doc.shares.length,
+    });
+  } catch (error) {
+    return errorResponse(res, error.message, 500);
+  }
+};
+
+
+exports.recipeSave = async (req, res) => {
+  try {
+    const { recipeId } = req.body;
+    const userId = req.user._id; // Assuming this is available
+
+    let meta = await RecipeLikeShareModel.findOne({ recipeId });
+    if (!meta) {
+      meta = new RecipeLikeShareModel({ recipeId });
+    }
+
+    const isSaved = meta.saves.map(id => id.toString()).includes(userId.toString());
+
+    if (isSaved) {
+      meta.saves = meta.saves.filter(id => id.toString() !== userId.toString());
+    } else {
+      meta.saves.push(userId);
+    }
+
+    await meta.save();
+
+    return successResponse(res, "Recipe save status updated", {
+      saved: !isSaved, // Updated Status
+      savesCount: meta.saves.length, // Updated Count
+    });
+
+  } catch (error) {
+    return errorResponse(res, "Save operation failed.", 500);
+  }
+};
+
+
+
+exports.recipeView = async (req, res) => {
+  try {
+    const { recipeId } = req.body;
+    const userId = req.user._id;
+
+    await RecipeLikeShareModel.findOneAndUpdate(
+      { recipeId },
+      { $addToSet: { views: userId } },
+      { new: true, upsert: true }
+    );
+
+    return successResponse(res, "View counted.", { viewed: true });
+  } catch (error) {
+    return errorResponse(res, error.message, 500);
+  }
+};
+ 
+
+exports.submitRecipeRating = async (req, res) => {
+    try {
+        const { recipeId, rating } = req.body;
+        const userId = req.user._id;
+        console.log(userId);
+
+
+        const recipe = await Recipe.findById(recipeId);
+        console.log(recipe);
+
+        const existingRatingIndex = recipe?.ratings.findIndex(r => r.user.toString() === userId.toString());
+
+        if (existingRatingIndex > -1) {
+            recipe.ratings[existingRatingIndex].value =  parseInt(rating);
+        } else {
+            recipe.ratings.push({ user: userId, value: parseInt(rating) }); // 'rating' key removed, using 'value'
+        }
+        console.log(existingRatingIndex);
+
+        const totalRatings = recipe.ratings.length;
+        const sumRatings = recipe.ratings.reduce((sum, current) => sum + current.value, 0);
+        recipe.avgRating = sumRatings / totalRatings;
+        console.log(totalRatings,sumRatings)
+
+        await recipe.save();
+
+
+        console.log(recipe.ratings.length, recipe.avgRating, rating);
+
+        return successResponse(res, "Rating submitted successfully", {
+            avgRating: recipe.avgRating,
+            totalRatings: recipe.ratings.length,
+            submittedRating: rating
+        });
+
+    } catch (error) {
+      console.log(error);
+        return errorResponse(res, error.message || "Rating submission failed.", 500);
+    }
+};
+
+
+
+
+
+

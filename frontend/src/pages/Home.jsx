@@ -6,7 +6,7 @@ import MailBox from '../components/MailBox';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from "react-router-dom";
 
-import { getCategories } from '../features/recipeSlice';
+import { fetchRecommendations, getCategories } from '../features/recipeSlice';
 
 const Home = () => {
     const categoryImages = [
@@ -123,7 +123,7 @@ const Home = () => {
     ]
 
     const dispatch = useDispatch();
-    const { error, loading, categories } = useSelector((state) => state.recipe);
+    const { error, loading, categories,recommendRecipes } = useSelector((state) => state.recipe);
     console.log(categories);
 
     useEffect(() => {
@@ -131,6 +131,7 @@ const Home = () => {
         (async () => {
             try {
                 const res = await dispatch(getCategories()).unwrap(); // backend endpoint (see below)
+                dispatch(fetchRecommendations({categoryId:null,limit:10}));
                 if (!mounted) return;
             } catch (err) {
                 console.error(err);
@@ -141,7 +142,7 @@ const Home = () => {
 
     return (
         <main>
-             
+
             <section className="max-w-screen-xl mx-auto px-4  py-14">
                 <div className="flex items-center justify-between mb-8">
                     <h2 className="sm:text-3xl text-lg font-bold text-gray-800">🍽️ Categories</h2>
@@ -158,12 +159,12 @@ const Home = () => {
                         categories.map((cat) => (
                             <Link
                                 key={cat.name}
-                             to={`/category/${cat._id}`}
+                                to={`/category/${cat._id}`}
                                 className="group flex flex-col items-center text-center gap-5"
                             >
                                 <div className="w-full max-w-[140px] sm:max-w-[180px] aspect-square rounded-full overflow-hidden shadow-md hover:shadow-lg transition duration-300">
                                     <img
-                                        src={cat.image?.url || "/placeholder.jpg"}
+                                        src={cat.categoryImage?.url || "/placeholder.jpg"}
                                         alt={cat.name}
                                         className="w-full h-full object-cover"
                                     />
@@ -196,8 +197,10 @@ const Home = () => {
                     </div>
                     <div className="bottom mt-20">
                         <div className="recipesCards w-full grid lg:grid-cols-3 sm:grid-cols-2 lg:gap-14 gap-10">
-                            {recipes.map((recp) => (
-                                <RecipieCard key={recp.id} title={recp.title} time={recp.time} type={recp.time} url={recp.imgUrl} isLiked={recp.isLiked} />
+                            {recommendRecipes?.length > 0 && recommendRecipes.map((recp) => (
+                                <RecipieCard key={recp._id} title={recp.title} prepTime={recp.prepTime} cookTime={recp.cookTime} url={recp?.dishImage?.url} avgRating={recp?.avgRating} showRating={true} />
+
+                                // <RecipieCard key={recp.id} title={recp.title} time={recp.time} type={recp.time} url={recp.imgUrl} isLiked={recp.isLiked} />
                             ))}
                         </div>
                     </div>
@@ -231,7 +234,7 @@ const Home = () => {
                     </div>
                 </div>
             </section>
-            
+
 
 
 
@@ -250,8 +253,10 @@ const Home = () => {
                     </div>
                     <div className="bottom mt-6">
                         <div className="recipesCards  grid xl:grid-cols-4 lg:grid-cols-3 sm:grid-cols-2 lg:gap-14 gap-10">
-                            {recipes.map((recp) => (
-                                <RecipieCard key={recp.id} title={recp.title} time={recp.time} type={recp.time} url={recp.imgUrl} isLiked={recp.isLiked} />
+                            {recommendRecipes?.length > 0 && recommendRecipes.map((recp) => (
+                                <RecipieCard key={recp._id} title={recp.title} prepTime={recp.prepTime} cookTime={recp.cookTime} url={recp?.dishImage?.url} difficultyLevel={recp?.difficultyLevel} />
+
+                                // <RecipieCard key={recp.id} title={recp.title} time={recp.time} type={recp.time} url={recp.imgUrl} isLiked={recp.isLiked} />
                             ))}
                         </div>
                     </div>

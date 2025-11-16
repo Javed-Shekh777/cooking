@@ -2,17 +2,40 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import api from "../utils/axios";
 import { recipeApis } from "../constans/ApisUtils";
+// const initialState = {
+//     suggestTags: [],
+//     categories: [],
+//     recipes: [],
+//     recipeCategory: [],
+//     recipe: {},
+//     dashboardData: null,
+//     loading: false,
+//     error: null,
+//     category: null
+// };
+
 const initialState = {
     suggestTags: [],
     categories: [],
     recipes: [],
     recipeCategory: [],
     recipe: {},
+    recipeMeta: {   // सुनिश्चित करें कि इसमें सभी फ़ील्ड हैं
+        isLiked: false,
+        isSaved: false,
+        likesCount: 0,
+        savesCount: 0,
+        viewsCount: 0,
+        sharesCount: 0,
+    },   // ✅ new field for meta info
     dashboardData: null,
     loading: false,
     error: null,
-    category:null
+    category: null,
+    comments: [],
+    recommendRecipes: [],
 };
+
 
 export const suggestTags = createAsyncThunk(
     "recipe/suggestTags",
@@ -62,7 +85,7 @@ export const updateRecipe = createAsyncThunk("recipe/update-recipe", async ({ id
 
 export const getCategories = createAsyncThunk("recipe/getCategories", async (_, { rejectWithValue }) => {
     try {
-        const res = await api.get(recipeApis.getCageroy);
+        const res = await api.get(recipeApis.getCategories);
         console.log("Response:", res.data);
         return res.data.data; // ✅ sirf array of category chahiye
     } catch (error) {
@@ -71,11 +94,11 @@ export const getCategories = createAsyncThunk("recipe/getCategories", async (_, 
     }
 })
 
-export const getRecipes = createAsyncThunk("recipe/getRecipes", async (categoryId=null, { rejectWithValue }) => {
+export const getRecipes = createAsyncThunk("recipe/getRecipes", async (categoryId = null, { rejectWithValue }) => {
     try {
-         const url = categoryId
-        ? `${recipeApis.getRecipes}?categoryId=${categoryId}`
-        : `${recipeApis.getRecipes}`;
+        const url = categoryId
+            ? `${recipeApis.getRecipes}?categoryId=${categoryId}`
+            : `${recipeApis.getRecipes}`;
 
         const res = await api.get(url);
         console.log("Response:", res.data);
@@ -85,6 +108,35 @@ export const getRecipes = createAsyncThunk("recipe/getRecipes", async (categoryI
         return rejectWithValue(error?.response?.data || "Falied to load Category");
     }
 })
+
+export const fetchRecommendations = createAsyncThunk(
+    "recipe/fetchRecommendations",
+    async ({ recipeId, categoryId, limit }, { rejectWithValue }) => {
+        try {
+            console.log("Indide")
+            const params = new URLSearchParams();
+            if (recipeId) params.append('recipeId', recipeId);
+            if (limit) params.append('limit', limit);
+
+            if (categoryId) params.append('categoryId', categoryId);
+
+
+            const url = `${recipeApis.getRecommendedRecipes}?${params.toString()}`;
+            console.log(url, params);
+
+            const res = await api.get(url);
+
+
+            console.log("Recommendations Response:", res.data);
+            return res.data.data; // केवल डेटा एरे वापस करें
+
+        } catch (error) {
+            console.error("Response Error:", error);
+            return rejectWithValue(error?.response?.data || "Failed to fetch recommendations");
+        }
+    }
+);
+
 
 
 export const getRecipesCategory = createAsyncThunk("recipe/getRecipesCategory", async (id, { rejectWithValue }) => {
@@ -117,8 +169,11 @@ export const getRecipe = createAsyncThunk(
 export const getCategory = createAsyncThunk(
     "recipe/getCategory",
     async (id, { rejectWithValue }) => {
+
         try {
-            const res = await api.get(`${recipeApis.getCageroy}/${id}`); // ✅ id inject hua
+
+            console.log(`${recipeApis.getCategory}/${id}`)
+            const res = await api.get(`${recipeApis.getCategory}/${id}`); // ✅ id inject hua
             console.log("Response:", res.data);
             return res.data.data;
         } catch (error) {
@@ -159,6 +214,128 @@ export const addCategory = createAsyncThunk("recipe/addCategory", async (formDat
     }
 })
 
+
+export const updateCategory = createAsyncThunk("recipe/updateCategory", async ({ id, formData }, { rejectWithValue }) => {
+    try {
+        const url = `${recipeApis.updateCategory}/${id}`;
+        const res = await api.post(url, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data"
+            }
+        });
+        console.log("Response:", res.data);
+        return res.data; // ✅ sirf array of recipes chahiye
+    } catch (error) {
+        console.log("Response Error:", error);
+        return rejectWithValue(error?.response?.data || "Falied to save Category");
+    }
+})
+
+export const recipeLikeDish = createAsyncThunk("recipe/recipeLikeDish", async (recipeId, { rejectWithValue }) => {
+    try {
+        console.log(recipeId)
+        const res = await api.post(recipeApis.recipeLikeDish, { recipeId: recipeId });
+        console.log("Response:", res.data);
+        return res.data; // ✅ sirf array of recipes chahiye
+    }
+    catch (error) {
+        console.log("Response Error:", error);
+        return rejectWithValue(error?.response?.data || "Falied to like dish");
+    }
+});
+
+export const recipeView = createAsyncThunk("recipe/recipeView", async (recipeId, { rejectWithValue }) => {
+    try {
+        const res = await api.post(recipeApis.recipeView, { recipeId: recipeId });
+        console.log("Response:", res.data);
+        return res.data; // ✅ sirf array of recipes chahiye
+    }
+    catch (error) {
+        console.log("Response Error:", error);
+        return rejectWithValue(error?.response?.data || "Falied to view dish");
+    }
+});
+
+export const recipeSave = createAsyncThunk("recipe/recipeSave", async (recipeId, { rejectWithValue }) => {
+    try {
+        const res = await api.post(recipeApis.recipeSave, { recipeId: recipeId });
+        console.log("Response:", res.data);
+        return res.data; // ✅ sirf array of recipes chahiye
+    }
+    catch (error) {
+        console.log("Response Error:", error);
+        return rejectWithValue(error?.response?.data || "Falied to save dish");
+    }
+});
+
+
+export const recipeShare = createAsyncThunk("recipe/recipeShare", async (recipeId, { rejectWithValue }) => {
+    try {
+        const res = await api.post(recipeApis.recipeShare, { recipeId: recipeId });
+        console.log("Response:", res.data);
+        return res.data; // ✅ sirf array of recipes chahiye
+    }
+    catch (error) {
+        console.log("Response Error:", error);
+        return rejectWithValue(error?.response?.data || "Falied to share dish");
+    }
+});
+
+
+export const submitRating = createAsyncThunk("recipe/submitRating", async (data, { rejectWithValue }) => {
+    try {
+        console.log(data);
+        const res = await api.post(recipeApis.submitRecipeRating, data);
+        return res.data.data;
+    } catch (error) {
+        return rejectWithValue(error?.response?.data || "Failed to submit rating");
+    }
+});
+
+
+// ✅ 'addComemnt' को 'addComment' में बदलें
+export const addComment = createAsyncThunk("recipe/addComment", async (data, { rejectWithValue }) => {
+    try {
+        console.log("Data: ", data);
+        const url = `${recipeApis.addComment}/${data?.recipeId}`;
+        console.log(url);
+        const res = await api.post(url, data);
+        console.log("Response:", res.data);
+        return res.data; // यह सर्वर से successResponse का पूरा ऑब्जेक्ट होगा
+    } catch (error) {
+        console.log("Response Error:", error);
+        return rejectWithValue(error?.response?.data || "Failed to add comment/reply");
+    }
+});
+
+
+export const getComments = createAsyncThunk("recipe/getComments", async (recipeId, { rejectWithValue }) => {
+    try {
+        const url = `${recipeApis.getComments}/${recipeId}`;
+
+        const res = await api.get(url);
+        console.log("Response:", res.data);
+        return res.data;
+    } catch (error) {
+        console.log("Response Error:", error);
+        return rejectWithValue(error?.response?.data || "Falied to fetch comments");
+    }
+});
+
+export const toggleCommentLike = createAsyncThunk("recipe/toggleCommentLike", async (commentId, { rejectWithValue }) => {
+    try {
+        const url = `${recipeApis.toggleCommentLike}/${commentId}`;
+
+        const res = await api.post(url);
+        console.log("Response:", res.data);
+        return res.data; // ✅ sirf array of recipes chahiye
+    } catch (error) {
+        console.log("Response Error:", error);
+        return rejectWithValue(error?.response?.data || "Falied to share dish");
+    }
+});
+
+
 const recipeSlice = createSlice({
     name: "recipe",
     initialState,
@@ -193,6 +370,8 @@ const recipeSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload;
             })
+
+
             .addCase(getRecipes.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -205,6 +384,21 @@ const recipeSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload;
             })
+
+            .addCase(fetchRecommendations.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchRecommendations.fulfilled, (state, action) => {
+                state.loading = false;
+                console.log("Recocoem: ", action.payload);
+                state.recommendRecipes = action.payload; // ✅ yahan array set ho raha
+            })
+            .addCase(fetchRecommendations.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+
             .addCase(addRecipe.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -244,24 +438,53 @@ const recipeSlice = createSlice({
                 state.error = action.payload;
             })
 
+            .addCase(updateCategory.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(updateCategory.fulfilled, (state, action) => {
+                state.loading = false;
+                console.log(action.payload.data);
+                const updatedCategory = action.payload.data;
+
+                const index = state.categories.findIndex(
+                    c => c._id === updatedCategory._id
+                );
+
+                if (index !== -1) {
+                    state.categories[index] = updatedCategory;
+                }
+
+                if (state.category && state.category._id === updatedCategory._id) {
+                    state.category = updatedCategory;
+                }
+            })
+            .addCase(updateCategory.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+
             .addCase(getRecipe.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
             .addCase(getRecipe.fulfilled, (state, action) => {
                 state.loading = false;
-                console.log("payload: ",action.payload);
-                state.recipe = action.payload; // ✅ yahan array set ho raha
+                console.log("payload: ", action.payload);
+
+                state.recipe = action.payload.recipe;   // ✅ actual recipe data
+                state.recipeMeta = action.payload.meta; // ✅ meta info (likes, saves, counts)
             })
+
             .addCase(getRecipe.rejected, (state, action) => {
                 state.loading = false;
-                console.log("payload: ",action.payload);
+                console.log("payload: ", action.payload);
 
                 state.error = action.payload;
             })
 
 
-             .addCase(getRecipesCategory.pending, (state) => {
+            .addCase(getRecipesCategory.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
@@ -281,18 +504,18 @@ const recipeSlice = createSlice({
             // })
             .addCase(getCategory.fulfilled, (state, action) => {
                 state.loading = false;
-                console.log("payload: ",action.payload);
+                console.log("payload: ", action.payload);
                 state.category = action.payload; // ✅ yahan array set ho raha
             })
             .addCase(getCategory.rejected, (state, action) => {
                 state.loading = false;
-                console.log("payload: ",action.payload);
+                console.log("payload: ", action.payload);
 
                 state.error = action.payload;
             })
 
 
-             .addCase(dashboard.pending, (state) => {
+            .addCase(dashboard.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
@@ -303,6 +526,126 @@ const recipeSlice = createSlice({
             .addCase(dashboard.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
+            })
+
+
+            // commentsSlice.js (extraReducers)
+
+            .addCase(addComment.fulfilled, (state, action) => {
+                const newOrUpdatedComment = action.payload.data;
+
+                if (newOrUpdatedComment.replies && newOrUpdatedComment.replies.length > 0) {
+                    const index = state.comments.findIndex(c => c._id === newOrUpdatedComment._id);
+                    if (index !== -1) {
+                        state.comments[index] = newOrUpdatedComment;
+                    }
+                } else {
+                    state.comments.unshift(newOrUpdatedComment);
+                }
+            })
+
+            .addCase(toggleCommentLike.fulfilled, (state, action) => {
+                const { commentId, updatedLikesArray } = action.payload.data;
+
+                const commentIndex = state.comments.findIndex(c => c._id === commentId);
+
+                if (commentIndex !== -1) {
+                    state.comments[commentIndex].likes = updatedLikesArray;
+
+                    state.comments[commentIndex].likesCount = updatedLikesArray.length;
+                }
+            })
+            .addCase(getComments.pending, (state) => {
+                state.commentsLoading = true;
+                state.commentsError = null;
+            })
+
+            .addCase(getComments.fulfilled, (state, action) => {
+                state.commentsLoading = false;
+                state.comments = action.payload.data;
+            })
+
+            .addCase(getComments.rejected, (state, action) => {
+                state.commentsLoading = false;
+                state.commentsError = action.payload || "Failed to fetch comments";
+                state.comments = []; // त्रुटि होने पर एरे खाली कर दें
+            })
+
+            .addCase(recipeLikeDish.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            }
+            )
+            .addCase(recipeLikeDish.fulfilled, (state, action) => {
+                state.loading = false;
+                console.log("Like Response: ", action.payload);
+
+                // ✅ महत्वपूर्ण: Redux state को नए API डेटा से अपडेट करें
+                state.recipeMeta.isLiked = action.payload.data.isLiked;
+                state.recipeMeta.likesCount = action.payload.data.likesCount;
+            })
+            .addCase(recipeLikeDish.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(recipeSave.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            }
+            )
+            .addCase(recipeSave.fulfilled, (state, action) => {
+                state.loading = false;
+                console.log("Save Response: ", action.payload);
+
+                state.recipeMeta.isSaved = action.payload.data.saved;
+                state.recipeMeta.savesCount = action.payload.data.savesCount;
+            })
+
+            .addCase(recipeSave.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(recipeShare.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            }
+            )
+            .addCase(recipeShare.fulfilled, (state, action) => {
+                state.loading = false;
+                console.log("Save Response: ", action.payload);
+
+                state.recipeMeta.isSaved = action.payload.data.saved;
+                state.recipeMeta.sharesCount = action.payload.data.savesCount;
+            })
+            .addCase(recipeShare.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(recipeView.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            }
+            )
+            .addCase(recipeView.fulfilled, (state, action) => {
+                state.loading = false;
+            })
+            .addCase(recipeView.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+
+            // recipeSlice.js (extraReducers)
+
+            .addCase(submitRating.fulfilled, (state, action) => {
+                state.loading = false;
+                const { avgRating, totalRatings, submittedRating } = action.payload;
+
+                if (state.recipe && state.recipe._id === action.meta.arg.recipeId) {
+                    state.recipe.avgRating = avgRating;
+                    state.recipe.totalRatings = totalRatings;
+                }
+
+                state.recipeMeta.userRating = submittedRating;
             })
 
 

@@ -63,8 +63,7 @@ const router = createBrowserRouter([
                     { path: "recipe/add", element: <AddReceipie mode="add" /> },
                     { path: "recipe/edit/:id", element: <AddReceipie mode="edit" /> },
                     { path: "all-recipes", element: <AllRecipes /> },
-                    { path: "all-category", element: <AllCategory mode="add" /> },
-                    { path: "all-category/edit/:id", element: <AllCategory mode="edit"  /> },
+                    { path: "all-category", element: <AllCategory /> },
                     { path: "setting", element: <Setting /> },
 
 

@@ -1,7 +1,7 @@
 import React from 'react'
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux'
-import { getCategories, getRecipes } from '../features/recipeSlice';
+import { getCategories, getRecipes, fetchRecommendations } from '../features/recipeSlice';
 import RecipieCard from '../components/RecipieCard';
 import MailBox from '../components/MailBox';
 import { FaEdit } from 'react-icons/fa';
@@ -31,7 +31,7 @@ const dummyRecipes = [
 
 const Recipes = () => {
     const dispatch = useDispatch();
-    const { suggestTags: suggestions, error, recipes, loading, categories } = useSelector((state) => state.recipe);
+    const { suggestTags: suggestions, error, recipes, loading, categories,recommendRecipes } = useSelector((state) => state.recipe);
     const [selectedCategory, setSelectedCategory] = useState("All");
 
     console.log(recipes);
@@ -40,19 +40,28 @@ const Recipes = () => {
 
     useEffect(() => {
         if (categories.length === 0) {
-            dispatch(getCategories());
+            dispatch(getCategories()).unwrap();
+
         }
     }, [dispatch, categories]);
 
 
 
+ // RecipeListPage.jsx (Assuming this is where this useEffect lives)
+
     useEffect(() => {
         if (selectedCategory === "All") {
+            console.log("Hello");
             dispatch(getRecipes()); // fetch all recipes
+
+            dispatch(fetchRecommendations({limit:5})); 
+
         } else {
             dispatch(getRecipes(selectedCategory)); // fetch by category ID
+            dispatch(fetchRecommendations({categoryId:selectedCategory,limit:5}));
         }
     }, [selectedCategory, dispatch]);
+
 
 
 
@@ -77,7 +86,7 @@ const Recipes = () => {
                 </div> */}
 
 
-                <div className="flex overflow-x-auto gap-x-6 no-scrollbar scrollbar-hide px-1 py-2">
+                <div className="flex overflow-x-auto gap-x-6 no-scrollbar   [scrollbar-width:none] px-1 py-2">
                     <button
                         onClick={() => setSelectedCategory("All")}
                         className={`flex-shrink-0 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm ${selectedCategory === "All"
@@ -178,9 +187,9 @@ const Recipes = () => {
                 <div className="bottom my-20 ">
                     <h1 className="title text-4xl font-semibold text-center my-4">You may like these recipes too</h1>
                     <div className="recipesCards w-full grid lg:grid-cols-4 sm:grid-cols-2 lg:gap-14 gap-10">
-                        {dummyRecipes.map((recp) => (
-                            <RecipieCard key={recp.id} title={recp.title} time={recp.time} type={recp.time} url={recp.imgUrl} isLiked={recp.isLiked} />
-                        ))}
+                        {recommendRecipes?.length > 0 && recommendRecipes?.map((recp) => (
+                            <RecipieCard key={recp._id} title={recp.title} prepTime={recp.prepTime} cookTime={recp.cookTime} url={recp?.dishImage?.url}   />
+                        ))} 
                     </div>
                 </div>
 

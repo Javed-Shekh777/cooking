@@ -5,20 +5,19 @@ import { useDispatch, useSelector } from 'react-redux';
 import { localregisterUser } from '../features/authSlice';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 
 
 const SignUp = () => {
     const navigate = useNavigate();
 
-    const [formData, setFormData] = useState({ username: "", email: "", password: "", conPassword: "", role: "" ,fullName:""});
+    const [formData, setFormData] = useState({ username: "", email: "", password: "", conPassword: "", role: "", fullName: "" });
     const [formError, setFormError] = useState({ field: "", value: "" });
     const dispatch = useDispatch();
     const signUpData = useSelector((state) => state.auth);
 
-        console.log("\n User Data: ",signUpData);
-        
-
+    console.log("\n User Data: ", signUpData);
 
 
     const handleChange = (e) => {
@@ -69,8 +68,54 @@ const SignUp = () => {
     }
 
 
+
+    const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+    console.log(GOOGLE_CLIENT_ID);
+
+
+    
+
+    // const initializeGoogleSignIn = () => {
+    //     window.google.accounts.id.initialize({
+    //         client_id: GOOGLE_CLIENT_ID,
+    //         callback: handleGoogleResponse,
+    //     });
+    // }
+
+    // const handleGoogleResponse = async (response) => {
+    //     console.log(response);
+    //     const res = await fetch("http://localhost:5000/api/auth/google", {
+    //         method: "POST",
+    //         headers: { "Content-Type": "application/json" },
+    //         body: JSON.stringify({ token: response.credential })
+    //     });
+
+    //     const data = await res.json();
+    //     console.log(data);
+
+    //     if (data.success) {
+    //         localStorage.setItem("token", data.token);
+    //         alert("Login Success ✅");
+    //     }
+    // };
+
+    // useEffect(() => {
+    //     initializeGoogleSignIn();
+    // }, []);
+
+    // const googleLogin = () => {
+    //     // Only call prompt here → NO initialize again
+    //     window.google.accounts.id.prompt();
+         
+    // };
+
+
+
+
+
     return (
-        <section className="h-screen w-screen flex items-center justify-center bg-gray-100">
+        <section className=" py-6 flex items-center justify-center bg-gray-100">
             {/* Main Card */}
             <div className="xl:flex   rounded-2xl shadow-2xl mx-2 my-1 overflow-hidden xl:w-[800px] w-[400px]  bg-white">
 
@@ -86,7 +131,9 @@ const SignUp = () => {
 
                             {/* Social Icons */}
                             <div className="flex gap-4 my-4">
-                                <div className="w-12 h-12 flex items-center cursor-pointer justify-center rounded-full bg-[#E7F9FD]/40 text-red-500 text-xl hover:shadow-md transition-all duration-300">
+                                <div 
+                                // onClick={googleLogin} 
+                                className="w-12 h-12 flex items-center cursor-pointer justify-center rounded-full bg-[#E7F9FD]/40 text-red-500 text-xl hover:shadow-md transition-all duration-300">
                                     <FcGoogle size={25} />
                                 </div>
                                 <div className="w-12 h-12 flex items-center cursor-pointer  justify-center rounded-full bg-[#E7F9FD]/40 text-blue-600 text-xl hover:shadow-md transition-all duration-300">
@@ -106,7 +153,7 @@ const SignUp = () => {
 
                             {/* Form */}
                             <form onSubmit={submitHandler} method='post' className="flex flex-col gap-3 w-full">
-                                 <input
+                                <input
                                     type="text"
                                     placeholder="Your full name"
                                     value={formData.fullName}
@@ -139,8 +186,8 @@ const SignUp = () => {
                                     value={formData.password}
                                     onChange={handleChange}
                                     name='password'
-                                    autocomplete={false}
-                            
+                                    autoComplete={"off"}
+
                                     className="px-5 py-3 rounded-4xl   bg-[#E7F9FD]/40 focus:outline-none  focus:shadow"
                                 />
                                 {formError.field === "password" && <span className='text-sm text-red-500'>{formError.value}</span>}
@@ -150,7 +197,7 @@ const SignUp = () => {
                                     value={formData.conPassword}
                                     onChange={handleChange}
                                     name='conPassword'
-                                    autocomplete={false}
+                                    autoComplete={"off"}
 
                                     className="px-5 py-3 rounded-4xl   bg-[#E7F9FD]/40 focus:outline-none  focus:shadow"
                                 />
