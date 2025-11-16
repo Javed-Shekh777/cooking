@@ -230,7 +230,7 @@ const RecipeDetails = () => {
                                 {/* Author */}
                                 <div className="infoGroup flex items-center gap-x-2 sm:border-r sm:border-b-0 border-b sm:py-0 py-2 border-[rgba(0,0,0,0.1)]">
                                     <img
-                                        src={recipe.author?.profilePic || "/profile/user.jpg"}
+                                        src={recipe.author?.profileImage || "/profile/user.jpg"}
                                         alt={recipe.author?.username ? `${recipe.author.username}'s profile picture` : "author"}
                                         className="h-12 w-12 rounded-full"
                                     />

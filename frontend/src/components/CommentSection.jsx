@@ -5,12 +5,15 @@ import { MdMoreHoriz } from 'react-icons/md';
 import { FaRegComment, FaHeart } from 'react-icons/fa';
 import { useState } from 'react';
 import { timeAgo } from '../services/features';
+import { useSelector } from 'react-redux';
 
 
 const CommentsSection = ({ comments, user, handleAddComment, shownReplies, newCommentText, setNewCommentText, handleLikeComment, startReply, replyingToCommentId, toggleMoreMenu, toggleReplies, openMenuId, setOpenMenuId }) => {
 
     // State to manage which comment's 'More' menu is open
     // State to manage which comments have their replies expanded
+
+    const {user} = useSelector((state)=>state.auth);
 
     // Toggle the 'More' menu for a specific comment
     // const toggleMoreMenu = (commentId) => {

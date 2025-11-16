@@ -164,7 +164,7 @@ const Home = () => {
                             >
                                 <div className="w-full max-w-[140px] sm:max-w-[180px] aspect-square rounded-full overflow-hidden shadow-md hover:shadow-lg transition duration-300">
                                     <img
-                                        src={cat.categoryImage?.url || "/placeholder.jpg"}
+                                        src={cat?.categoryImage?.url || "/placeholder.jpg"}
                                         alt={cat.name}
                                         className="w-full h-full object-cover"
                                     />
