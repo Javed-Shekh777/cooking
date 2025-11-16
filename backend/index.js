@@ -2,7 +2,7 @@ require("dotenv").config();
 const app = require("./src/app");
 const DB = require("./src/config/db");
 const { PORT, NODE_ENV } = require("./src/constants");
-const catTagSeeder = require("./src/seed/catTagSeeder");
+// const catTagSeeder = require("./src/seed/catTagSeeder");
 
 // Handle uncaught exceptions
 process.on("uncaughtException", (err) => {
