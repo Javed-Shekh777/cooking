@@ -158,7 +158,7 @@ const SignUp = () => {
                                     placeholder="Your full name"
                                     value={formData.fullName}
                                     onChange={handleChange}
-                                    name='fullname'
+                                    name='fullName'
                                     className="px-5 py-3 rounded-4xl   bg-[#E7F9FD]/40 focus:outline-none  focus:shadow"
                                 />
                                 {formError.field === "fullname" && <span className='text-sm text-red-500'>{formError.value}</span>}
