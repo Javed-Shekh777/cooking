@@ -21,7 +21,7 @@ exports.localRegister = async (req, res, next) => {
         }
 
         const exist = await User.findOne({ email }).session(session);
-        if (exist) {
+        if (exist && exist?.isVerified) {
             return errorResponse(res, "User already exists", 400);
         }
 

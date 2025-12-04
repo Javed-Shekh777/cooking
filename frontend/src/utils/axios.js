@@ -1,19 +1,22 @@
 // api.js
 import axios from "axios";
 import { BACKEND_URL } from "../constans/index";
-
+console.log(BACKEND_URL);
 const api = axios.create({
   baseURL: BACKEND_URL,
   withCredentials: true,
 });
 
+
+console.log(api);
  
 
 
 // Request interceptor
 api.interceptors.request.use((config) => {
   try {
-    const accessToken = JSON.parse(localStorage.getItem("accessToken"));
+    const accessToken = localStorage.getItem("accessToken");
+    console.log(accessToken);
     if (accessToken) {
       config.headers.authorization = `Bearer ${accessToken}`;
     }

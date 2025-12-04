@@ -31,61 +31,36 @@ const dummyRecipes = [
 
 const Recipes = () => {
     const dispatch = useDispatch();
-    const { suggestTags: suggestions, error, recipes, loading, categories,recommendRecipes } = useSelector((state) => state.recipe);
+    const { suggestTags: suggestions, error, recipes = [], loading, categories = [], recommendRecipes = [] } = useSelector((state) => state.recipe);
     const [selectedCategory, setSelectedCategory] = useState("All");
-
-    console.log(recipes);
-
-
 
     useEffect(() => {
         if (categories.length === 0) {
-            dispatch(getCategories()).unwrap();
-
+            dispatch(getCategories());
         }
-    }, [dispatch, categories]);
+    }, [categories.length, dispatch]);
 
-
-
- // RecipeListPage.jsx (Assuming this is where this useEffect lives)
 
     useEffect(() => {
         if (selectedCategory === "All") {
-            console.log("Hello");
-            dispatch(getRecipes()); // fetch all recipes
-
-            dispatch(fetchRecommendations({limit:5})); 
-
+            dispatch(getRecipes());
         } else {
-            dispatch(getRecipes(selectedCategory)); // fetch by category ID
-            dispatch(fetchRecommendations({categoryId:selectedCategory,limit:5}));
+            dispatch(getRecipes(selectedCategory));
         }
     }, [selectedCategory, dispatch]);
 
-
-
+console.log(selectedCategory);
+    useEffect(() => {
+        dispatch(fetchRecommendations({
+            categoryId: selectedCategory === "All" ? undefined : selectedCategory,
+            limit: 5
+        }));
+    }, [selectedCategory, dispatch]);
 
     return (
         <section>
             <div className="recipieDetailsWrapper md:px-8 px-3 py-20">
                 {/* User Info */}
-
-                {/* <div className="w-full p-2">
-                    <div className="flex overflow-x-auto gap-x-6 no-scrollbar px-1 py-2">
-                        {categories?.map((cat) => (
-                            <button
-                                key={cat._id}
-                                className="flex-shrink-0 bg-gray-100 text-gray-800 px-4 py-2 rounded-full 
-                   font-medium text-sm hover:bg-black hover:text-white 
-                   transition-all duration-300 shadow-sm hover:shadow-md"
-                            >
-                                {cat?.name}
-                            </button>
-                        ))}
-                    </div>
-                </div> */}
-
-
                 <div className="flex overflow-x-auto gap-x-6 no-scrollbar   [scrollbar-width:none] px-1 py-2">
                     <button
                         onClick={() => setSelectedCategory("All")}
@@ -188,8 +163,8 @@ const Recipes = () => {
                     <h1 className="title text-4xl font-semibold text-center my-4">You may like these recipes too</h1>
                     <div className="recipesCards w-full grid lg:grid-cols-4 sm:grid-cols-2 lg:gap-14 gap-10">
                         {recommendRecipes?.length > 0 && recommendRecipes?.map((recp) => (
-                            <RecipieCard key={recp._id} title={recp.title} prepTime={recp.prepTime} cookTime={recp.cookTime} url={recp?.dishImage?.url}   />
-                        ))} 
+                            <RecipieCard key={recp._id} title={recp.title} prepTime={recp.prepTime} cookTime={recp.cookTime} url={recp?.dishImage?.url} />
+                        ))}
                     </div>
                 </div>
 

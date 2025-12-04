@@ -639,9 +639,9 @@ exports.updateCategory = async (req, res) => {
 
 
 
+
 exports.getRecommendedRecipes = async (req, res) => {
   try {
-
     const { recipeId, categoryId, limit } = req.query;
 
     console.log("Received recipeId:", recipeId);
@@ -649,24 +649,25 @@ exports.getRecommendedRecipes = async (req, res) => {
 
     let query = {};
 
-    if (categoryId && categoryId !== 'All') { // 'All' जैसी डिफ़ॉल्ट वैल्यू को अनदेखा करें यदि आवश्यक हो
+    // Filter by categoryId (except "All")
+    if (categoryId && categoryId !== "All") {
       query.categoryId = categoryId;
     }
 
-    if (recipeId && recipeId !== 'null' && recipeId !== 'undefined') {
-      query._id = { $ne: recipeId };
+    // Exclude current recipe
+    if (recipeId && recipeId !== "null" && recipeId !== "undefined") {
+      query._id = { $ne: new mongoose.Types.ObjectId(recipeId) };
     }
-
 
     console.log("Final MongoDB Query:", query);
 
-
-    const recommendations = await Recipe.find()
-      .limit(limit || 8) // केवल 8 परिणाम वापस करें
+    const recommendations = await Recipe.find(query)
+      .limit(parseInt(limit) || 8)
       .select("title dishImage rating prepTime cookTime ratings difficultyLevel tags avgRating")
-      .lean(); // तेज़ प्रदर्शन के लिए .lean() का उपयोग करें
+      .lean();
 
     console.log(`Found ${recommendations.length} recommendations.`);
+
     return successResponse(res, "Recommendations fetched", recommendations);
 
   } catch (error) {
@@ -674,6 +675,7 @@ exports.getRecommendedRecipes = async (req, res) => {
     return errorResponse(res, error.message || "Failed to fetch recommendations.", 500);
   }
 };
+
 
 
 
@@ -745,7 +747,9 @@ exports.getRecipes = async (req, res) => {
       filter.categoryId = categoryId;
     }
 
+
     const recipes = await Recipe.find(filter);
+    console.log(recipes,categoryId);
 
 
     if (!recipes || recipes.length === 0) {
@@ -1033,6 +1037,7 @@ exports.recipeLike = async (req, res) => {
     return successResponse(res, "Recipe like status updated", {
       isLiked: !isLiked, // नया स्टेटस
       likesCount: meta.likes.length, // नया काउंट
+      recipeId:recipeId
     });
 
   } catch (error) {

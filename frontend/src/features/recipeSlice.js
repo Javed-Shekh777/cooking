@@ -85,6 +85,7 @@ export const updateRecipe = createAsyncThunk("recipe/update-recipe", async ({ id
 
 export const getCategories = createAsyncThunk("recipe/getCategories", async (_, { rejectWithValue }) => {
     try {
+
         const res = await api.get(recipeApis.getCategories);
         console.log("Response:", res.data);
         return res.data.data; // ✅ sirf array of category chahiye
@@ -99,6 +100,7 @@ export const getRecipes = createAsyncThunk("recipe/getRecipes", async (categoryI
         const url = categoryId
             ? `${recipeApis.getRecipes}?categoryId=${categoryId}`
             : `${recipeApis.getRecipes}`;
+        console.log("URL:",url);
 
         const res = await api.get(url);
         console.log("Response:", res.data);
@@ -583,6 +585,7 @@ const recipeSlice = createSlice({
                 // ✅ महत्वपूर्ण: Redux state को नए API डेटा से अपडेट करें
                 state.recipeMeta.isLiked = action.payload.data.isLiked;
                 state.recipeMeta.likesCount = action.payload.data.likesCount;
+                 
             })
             .addCase(recipeLikeDish.rejected, (state, action) => {
                 state.loading = false;

@@ -12,8 +12,6 @@ const transpoter = nodemailer.createTransport({
 
 const verifyMail = async ({ username, email, webToken = "", verificationCode }) => {
   try {
-
-
     const options = {
       from: "mdjavedshekh777@gmail.com",
       to: email,

@@ -13,7 +13,6 @@ const CommentsSection = ({ comments, user, handleAddComment, shownReplies, newCo
     // State to manage which comment's 'More' menu is open
     // State to manage which comments have their replies expanded
 
-    const {user} = useSelector((state)=>state.auth);
 
     // Toggle the 'More' menu for a specific comment
     // const toggleMoreMenu = (commentId) => {

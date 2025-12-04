@@ -61,12 +61,12 @@ const RecipeDetails = () => {
 
 
     // ✅ Sync local state with Redux meta when recipeMeta changes
-    useEffect(() => {
-        if (recipeMeta) {
-            setLiked(recipeMeta.isLiked);
-            setSaved(recipeMeta.isSaved);
-        }
-    }, [recipeMeta]);
+    // useEffect(() => {
+    //     if (recipeMeta) {
+    //         setLiked(recipeMeta.isLiked);
+    //         setSaved(recipeMeta.isSaved);
+    //     }
+    // }, [recipeMeta]);
 
     // Format date safely
     let formattedDate = "";
@@ -76,28 +76,7 @@ const RecipeDetails = () => {
         formattedDate = `${day} ${mon[Number(month) - 1]} ${year}`;
     }
 
-    // const [comments, setComments] = useState([
-    //     {
-    //         id: 1,
-    //         name: "Anjali Verma",
-    //         text: "This recipe turned out amazing! I added a pinch of cinnamon.",
-    //         repShow: false,
-    //         replies: [
-    //             {
-    //                 id: 11,
-    //                 name: "Ravi Kapoor",
-    //                 text: "Great tip! I’ll try that next time.",
-    //             },
-    //         ],
-    //     },
-    //     {
-    //         id: 2,
-    //         name: "Meera Singh",
-    //         text: "Can I substitute almond milk instead of regular milk?",
-    //         repShow: false,
-    //         replies: [],
-    //     },
-    // ]);
+    
 
     const toggleMoreMenu = (commentId) => {
         setOpenMenuId(openMenuId === commentId ? null : commentId);
