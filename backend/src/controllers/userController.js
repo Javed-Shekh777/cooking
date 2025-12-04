@@ -149,7 +149,7 @@ exports.localLogin = async (req, res) => {
         // set cookies
         res.cookie("accessToken", user.accessToken, cookieOptions);
         res.cookie("refreshToken", user.refreshToken, cookieOptions);
-        res.cookie("loginUserData", user, cookieOptions);
+        res.cookie("user", user, cookieOptions);
 
 
         return successResponse(res, "Login successfully.", {
@@ -181,6 +181,46 @@ exports.refreshToken = async (req, res) => {
     }
 }
 
+exports.refreshToken = async (req, res) => {
+    try {
+        const token = req.cookies.refreshToken;
+        if (!token) return errorResponse(res, "No refresh token", 401);
+
+        const payload = JWT.verify(token, Tokens.refreshToken);
+        const user = await User.findById(payload.id);
+        if (!user) return errorResponse(res, "User not found", 404);
+
+        const newAccessToken = user.generateAccessToken();
+        const newRefreshToken = user.generateRefreshToken();
+
+        // Set new access token cookie also (optional but recommended)
+        const cookieOptions = {
+            httpOnly: true,
+            secure: true,
+            sameSite: "Strict",
+            // maxAge: 7*24*60*60*1000
+        };
+        user.accessToken = newAccessToken;
+        user.refreshToken = newRefreshToken;
+        await user.save();
+        user.password = undefined;
+
+        // set cookies
+        res.cookie("accessToken", user.accessToken, cookieOptions);
+        res.cookie("refreshToken", user.refreshToken, cookieOptions);
+        res.cookie("user", user, cookieOptions);
+
+        return successResponse(res, "Token refreshed", {
+            accessToken: newAccessToken,
+            user: user
+        });
+
+    } catch (err) {
+        return errorResponse(res, err.message, 401);
+    }
+};
+
+
 exports.logout = async (req, res) => {
     try {
         let user = null;
@@ -207,7 +247,7 @@ exports.logout = async (req, res) => {
         // Har case me cookies clear kar do
         res.clearCookie("refreshToken");
         res.clearCookie("accessToken");
-        res.clearCookie("loginUserData");
+        res.clearCookie("user");
 
         return successResponse(res, "Logout successfully");
     } catch (error) {
@@ -252,40 +292,40 @@ exports.getUserProfile = async (req, res) => {
 
 
 exports.updateUserProfile = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { fullName, username, oldImage } = req.body;
+    try {
+        const userId = req.user._id;
+        const { fullName, username, oldImage } = req.body;
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return errorResponse(res, "User not found", 404);
-    }
-
-    // Handle image upload
-    if (req.file) {
-      const uploadRes = await cloudinaryUpload(req.file.buffer, cloudinaryFolderNames.profile, "image");
-
-      if (uploadRes?.secure_url && uploadRes?.public_id) {
-        user.profileImage = {
-          url: uploadRes.secure_url,
-          publicId: uploadRes.public_id,
-        };
-
-        if (oldImage) {
-          await cloudinaryDelete(oldImage);
+        const user = await User.findById(userId);
+        if (!user) {
+            return errorResponse(res, "User not found", 404);
         }
-      } else {
-        return errorResponse(res, "Image upload failed", 500);
-      }
+
+        // Handle image upload
+        if (req.file) {
+            const uploadRes = await cloudinaryUpload(req.file.buffer, cloudinaryFolderNames.profile, "image");
+
+            if (uploadRes?.secure_url && uploadRes?.public_id) {
+                user.profileImage = {
+                    url: uploadRes.secure_url,
+                    publicId: uploadRes.public_id,
+                };
+
+                if (oldImage) {
+                    await cloudinaryDelete(oldImage);
+                }
+            } else {
+                return errorResponse(res, "Image upload failed", 500);
+            }
+        }
+
+        // Update profile fields
+        user.fullName = fullName || user.fullName;
+        user.username = username || user.username;
+
+        await user.save();
+        return successResponse(res, "User profile updated successfully", user);
+    } catch (error) {
+        return errorResponse(res, error.message || "Failed to update user profile", 500);
     }
-
-    // Update profile fields
-    user.fullName = fullName || user.fullName;
-    user.username = username || user.username;
-
-    await user.save();
-    return successResponse(res, "User profile updated successfully", user);
-  } catch (error) {
-    return errorResponse(res, error.message || "Failed to update user profile", 500);
-  }
 };

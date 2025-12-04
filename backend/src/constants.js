@@ -35,7 +35,16 @@ const MONGODB_URL =
     : `${dbUrl}/${dbName}?retryWrites=true&w=majority&appName=AtlasApp`;
 
 const PORT = process.env.PORT;
-const allowedOrigins = ["https://cookify-ruby-eight.vercel.app","http://10.75.250.127:5173",process.env.FRONTEND,];
+console.log(process.env.FRONTEND);
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "https://cookify-ruby-eight.vercel.app",
+  "http://10.75.250.127:5173",
+  process.env.FRONTEND,
+];
+
+// const allowedOrigins = ["http://localhost:5173","https://cookify-ruby-eight.vercel.app","http://10.75.250.127:5173",process.env.FRONTEND];
 const Tokens = {
     acessToken: process.env.ACCESS_TOKEN,
     accessTokenExpiry: process.env.ACCESS_TOKEN_EXPIRY,

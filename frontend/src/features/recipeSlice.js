@@ -20,14 +20,14 @@ const initialState = {
     recipes: [],
     recipeCategory: [],
     recipe: {},
-    recipeMeta: {   // सुनिश्चित करें कि इसमें सभी फ़ील्ड हैं
+    recipeMeta: {
         isLiked: false,
         isSaved: false,
         likesCount: 0,
         savesCount: 0,
         viewsCount: 0,
         sharesCount: 0,
-    },   // ✅ new field for meta info
+    },
     dashboardData: null,
     loading: false,
     error: null,
@@ -100,9 +100,10 @@ export const getRecipes = createAsyncThunk("recipe/getRecipes", async (categoryI
         const url = categoryId
             ? `${recipeApis.getRecipes}?categoryId=${categoryId}`
             : `${recipeApis.getRecipes}`;
-        console.log("URL:",url);
+        console.log("URL:", url);
 
         const res = await api.get(url);
+        console.log(api);
         console.log("Response:", res.data);
         return res.data.data; // ✅ sirf array of recipes chahiye
     } catch (error) {
@@ -309,6 +310,28 @@ export const addComment = createAsyncThunk("recipe/addComment", async (data, { r
         return rejectWithValue(error?.response?.data || "Failed to add comment/reply");
     }
 });
+
+export const deleteComment = createAsyncThunk(
+  "recipe/deleteComment",
+  async (data, { rejectWithValue }) => {
+    try {
+      console.log("Delete Data: ", data);
+
+      const res = await api.delete(recipeApis.deleteComment, {
+        data: data,  // <-- Yaha body send hoti hai
+      });
+
+      console.log("Delete Response:", res.data);
+
+      return res.data;
+    } catch (error) {
+      console.log("Delete Error:", error);
+      return rejectWithValue(
+        error?.response?.data || "Failed to delete comment/reply"
+      );
+    }
+  }
+);
 
 
 export const getComments = createAsyncThunk("recipe/getComments", async (recipeId, { rejectWithValue }) => {
@@ -546,6 +569,45 @@ const recipeSlice = createSlice({
                 }
             })
 
+            .addCase(deleteComment.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(deleteComment.fulfilled, (state, action) => {
+                state.loading = false;
+
+                const { deletedId, commentId } = action.payload.data;
+
+                // -----------------------------------------
+                // CASE 1: Delete Main Comment
+                // -----------------------------------------
+                if (!commentId) {
+                    state.comments = state.comments.filter(
+                        (c) => c._id !== deletedId
+                    );
+                    return;
+                }
+
+                // -----------------------------------------
+                // CASE 2: Delete Reply
+                // -----------------------------------------
+                state.comments = state.comments.map((comment) => {
+                    if (comment._id === commentId) {
+                        return {
+                            ...comment,
+                            replies: comment.replies.filter(
+                                (reply) => reply._id !== deletedId
+                            )
+                        };
+                    }
+                    return comment;
+                });
+            })
+            .addCase(deleteComment.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+
             .addCase(toggleCommentLike.fulfilled, (state, action) => {
                 const { commentId, updatedLikesArray } = action.payload.data;
 
@@ -572,64 +634,72 @@ const recipeSlice = createSlice({
                 state.commentsError = action.payload || "Failed to fetch comments";
                 state.comments = []; // त्रुटि होने पर एरे खाली कर दें
             })
+            // ===========================
+            // FIXED REDUCER
+            // ===========================
 
+            // ⭐ LIKE
             .addCase(recipeLikeDish.pending, (state) => {
                 state.loading = true;
                 state.error = null;
-            }
-            )
+            })
             .addCase(recipeLikeDish.fulfilled, (state, action) => {
                 state.loading = false;
-                console.log("Like Response: ", action.payload);
 
-                // ✅ महत्वपूर्ण: Redux state को नए API डेटा से अपडेट करें
-                state.recipeMeta.isLiked = action.payload.data.isLiked;
-                state.recipeMeta.likesCount = action.payload.data.likesCount;
-                 
+                if (action.payload?.success) {
+                    state.recipeMeta.isLiked = action.payload.data.isLiked;
+                    state.recipeMeta.likesCount = action.payload.data.likesCount;
+                }
             })
             .addCase(recipeLikeDish.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             })
+
+
+            // ⭐ SAVE
             .addCase(recipeSave.pending, (state) => {
                 state.loading = true;
                 state.error = null;
-            }
-            )
+            })
             .addCase(recipeSave.fulfilled, (state, action) => {
                 state.loading = false;
-                console.log("Save Response: ", action.payload);
 
-                state.recipeMeta.isSaved = action.payload.data.saved;
-                state.recipeMeta.savesCount = action.payload.data.savesCount;
+                if (action.payload?.success) {
+                    state.recipeMeta.isSaved = action.payload.data.isSaved;
+                    state.recipeMeta.savesCount = action.payload.data.savesCount;
+                }
             })
-
             .addCase(recipeSave.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             })
+
+
+            // ⭐ SHARE
             .addCase(recipeShare.pending, (state) => {
                 state.loading = true;
                 state.error = null;
-            }
-            )
+            })
             .addCase(recipeShare.fulfilled, (state, action) => {
                 state.loading = false;
-                console.log("Save Response: ", action.payload);
 
-                state.recipeMeta.isSaved = action.payload.data.saved;
-                state.recipeMeta.sharesCount = action.payload.data.savesCount;
+                if (action.payload?.success) {
+                    state.recipeMeta.sharesCount = action.payload.data.sharesCount;
+                }
             })
             .addCase(recipeShare.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             })
+
+
+            // ⭐ VIEW (No meta update needed)
             .addCase(recipeView.pending, (state) => {
                 state.loading = true;
                 state.error = null;
-            }
-            )
-            .addCase(recipeView.fulfilled, (state, action) => {
+            })
+            .addCase(recipeView.fulfilled, (state) => {
                 state.loading = false;
             })
             .addCase(recipeView.rejected, (state, action) => {

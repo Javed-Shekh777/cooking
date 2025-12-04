@@ -61,7 +61,7 @@ const Navbar = () => {
         <header className='max-w-screen border-b-[#E4E6F1] border-b no-print'>
             <div className="headerWrapper flex items-center justify-between md:px-8 px-4 md:py-5 py-3.5">
                 <div className="headerLeft ">
-                    <a href="#" className='text-3xl  font-bold whitespace-nowrap'>Foodie<span className='text-[#FF7426] inline-block '>.</span></a>
+                    <a href="/" className='text-3xl  font-bold whitespace-nowrap'>Foodie<span className='text-[#FF7426] inline-block '>.</span></a>
                 </div>
                 <div className="headermid">
                     <ul className="menu md:flex hidden items-center xl:gap-x-10 sm:gap-x-6 font-medium whitespace-nowrap">

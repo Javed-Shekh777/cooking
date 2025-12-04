@@ -14,22 +14,35 @@ const path = require("path");
 
 // default 
 app.use(helmet());
-const corsOptionsDelegate = (req, callback) => {
-  const origin = req.header("Origin");
-  let corsOptions;
+// const corsOptionsDelegate = (req, callback) => {
+//   const origin = req.header("Origin");
+//   let corsOptions;
 
-  if (!origin || allowedOrigins.includes(origin)) {
-    corsOptions = { origin: true, credentials: true };
-  } else {
-    corsOptions = { origin: false };
-    console.log("❌ CORS blocked:", origin);
-  }
+//   if (!origin || allowedOrigins.includes(origin)) {
+//     corsOptions = { origin: true, credentials: true };
+//   } else {
+//     corsOptions = { origin: false };
+//     console.log("❌ CORS blocked:", origin);
+//   }
 
-  callback(null, corsOptions);
-};
+//   callback(null, corsOptions);
+// };
+
+if (process.env.NODE_ENV === "development") {
+  app.use(cors({
+    origin: [/http:\/\/localhost:\d+/, /http:\/\/127\.0\.0\.1:\d+/],
+    credentials: true,
+  }));
+} else {
+  app.use(cors({
+    origin: allowedOrigins,
+    credentials: true,
+  }));
+}
+
 
 // ✅ CORS middleware
-app.use(cors(corsOptionsDelegate));
+// app.use(cors(corsOptionsDelegate));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/images', express.static(path.join(__dirname, 'images')));

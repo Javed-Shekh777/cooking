@@ -25,13 +25,14 @@ export const recipeApis = {
     getCategories: "/recipe/get-categories",
     dashboard: "/recipe/dashboard",
     addComment: "/recipe/add-comment",
+    deleteComment: "/recipe/delete-comment",
     getComments: "/recipe/get-comments",
-    toggleCommentLike: "/recipe/like-comments",
+    toggleCommentLike: "/recipe/like-comment",
     recipeLikeDish: "/recipe/recipe-likedish",
     recipeShare: "/recipe/recipe-share",
     recipeView: "/recipe/recipe-view",
     recipeSave: "/recipe/recipe-save",
-    submitRecipeRating: "/recipe/recipe-rating"
+    submitRecipeRating: "/recipe/recipe-rating",
 
 
 

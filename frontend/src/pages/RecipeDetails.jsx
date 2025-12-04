@@ -7,7 +7,7 @@ import { MdMoreHoriz } from 'react-icons/md';
 
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from 'react-redux';
-import { addComment, fetchRecommendations, getComments, getRecipe, recipeLikeDish, recipeSave, recipeShare, submitRating, toggleCommentLike } from '../features/recipeSlice';
+import { addComment, deleteComment, fetchRecommendations, getComments, getRecipe, recipeLikeDish, recipeSave, recipeShare, submitRating, toggleCommentLike } from '../features/recipeSlice';
 import Spinner from '../components/Spinner';
 import MailBox from '../components/MailBox';
 import RecipieCard from '../components/RecipieCard';
@@ -37,36 +37,29 @@ const RecipeDetails = () => {
     const [openMenuId, setOpenMenuId] = useState(null);
     const [shownReplies, setShownReplies] = useState([]);
     const [replyingToCommentId, setReplyingToCommentId] = useState(null);
+    const [pageLoading, setPageLoading] = useState(false);
     console.log(newCommentText, replyingToCommentId, recipeId, "Hello", shownReplies);
 
     // Fetch recipe
     useEffect(() => {
+        setPageLoading(true);
         if (recipeId) {
-            dispatch(getRecipe(recipeId))
-                .unwrap()
-                .catch(() => console.log("Recipe not found"));
-
-            // ✅ यहाँ recipeId पास किया जा रहा है
-            dispatch(getComments(recipeId))
-                .unwrap()
-                .catch(() => console.log("Comments not found"));
-
-            dispatch(fetchRecommendations({ recipeId: recipeId, limit: 10, categoryId }))
-                .unwrap()
-                .catch(() => console.log("Recommended not found"));
-
-
+            dispatch(getRecipe(recipeId));
+            dispatch(getComments(recipeId));
+            dispatch(fetchRecommendations({ recipeId, limit: 10, categoryId }));
         }
-    }, [recipeId]);
+        setPageLoading(false);
+    }, [recipeId, categoryId]);
+
+    // Sync liked/saved with backend
+    useEffect(() => {
+        if (recipeMeta) {
+            setLiked(recipeMeta.isLiked);
+            setSaved(recipeMeta.isSaved);
+        }
+    }, [recipeMeta]);
 
 
-    // ✅ Sync local state with Redux meta when recipeMeta changes
-    // useEffect(() => {
-    //     if (recipeMeta) {
-    //         setLiked(recipeMeta.isLiked);
-    //         setSaved(recipeMeta.isSaved);
-    //     }
-    // }, [recipeMeta]);
 
     // Format date safely
     let formattedDate = "";
@@ -76,11 +69,14 @@ const RecipeDetails = () => {
         formattedDate = `${day} ${mon[Number(month) - 1]} ${year}`;
     }
 
-    
 
-    const toggleMoreMenu = (commentId) => {
-        setOpenMenuId(openMenuId === commentId ? null : commentId);
-    };
+
+    // const toggleMoreMenu = (commentId) => {
+    //     setOpenMenuId(openMenuId === commentId ? null : commentId);
+    // };
+
+   const toggleMoreMenu = (id) => setOpenMenuId(id);
+
 
     // ✅ Toggle visibility of replies for a specific comment
     const startReply = (commentId) => {
@@ -97,23 +93,29 @@ const RecipeDetails = () => {
     };
 
     const handleAddComment = () => {
+        if (!user) return alert("Please login first!");
+
         if (newCommentText.trim() && recipeId) {
             dispatch(addComment({
                 recipeId,
                 text: newCommentText,
                 parentId: replyingToCommentId
             }));
-            setNewCommentText('');
-            setReplyingToCommentId(null); // सबमिट के बाद स्टेट रीसेट करें
         }
+        setNewCommentText('');
+        setReplyingToCommentId(null);
     };
 
+
     const handleLikeComment = (commentId) => {
+        if (!user) return alert("Please login first!");
+
         dispatch(toggleCommentLike(commentId));
     };
 
 
-    if (loading) return <Spinner />;
+
+    if (pageLoading) return <Spinner />;
 
     if (!recipe) {
         return (
@@ -126,22 +128,26 @@ const RecipeDetails = () => {
 
     // ✅ Handlers
     const handleLike = async () => {
-        setLiked(!liked); // optimistic UI
+        if (!user) return alert("Please login first!");
+
+        setLiked(prev => !prev);
         try {
             const res = await dispatch(recipeLikeDish(recipeId)).unwrap();
-            setLiked(res.liked); // sync with backend response
+            setLiked(res.liked);
         } catch (err) {
-            console.error(err);
+            console.log(err);
         }
     };
 
     const handleSave = async () => {
-        setSaved(!saved);
+        if (!user) return alert("Please login first!");
+
+        setSaved(prev => !prev);
         try {
             const res = await dispatch(recipeSave(recipeId)).unwrap();
             setSaved(res.saved);
         } catch (err) {
-            console.error(err);
+            console.log(err);
         }
     };
 
@@ -175,7 +181,16 @@ const RecipeDetails = () => {
 
 
     // Placeholder functions for More menu actions
-    const handleDeleteComment = (commentId) => { console.log("Deleting:", commentId); setOpenMenuId(null); };
+    const handleDeleteComment = async (commentId,replyId="") => {
+        if (!user) return alert("Please login first!");
+
+        try {
+            await dispatch(deleteComment({ commentId, replyId })).unwrap();
+
+        } catch (err) {
+            console.log(err);
+        } setOpenMenuId(null);
+    };
     const handleReportComment = (commentId) => { console.log("Reporting:", commentId); setOpenMenuId(null); };
 
 
@@ -487,6 +502,8 @@ const RecipeDetails = () => {
                         toggleReplies={toggleReplies}
                         openMenuId={openMenuId}
                         setOpenMenuId={setOpenMenuId}
+                        handleDeleteComment={handleDeleteComment}
+
 
                     />
 

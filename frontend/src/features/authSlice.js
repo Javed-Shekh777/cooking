@@ -5,14 +5,14 @@ import { authApis } from "../constans/ApisUtils";
 
 
 const initialState = {
-    user: JSON.parse(localStorage.getItem("loginUserData") || null) || null,
+    user: JSON.parse(localStorage.getItem("user") || null) || null,
     // accessToken: localStorage.getItem("refreshToken") || null,
-    // refreshToken: localStorage.getItem("accessToken") || null,
     loading: false,
     profile: null,
     error: null,
 }
 
+console.log(initialState);
 
 // Register
 export const localregisterUser = createAsyncThunk(
@@ -72,7 +72,7 @@ export const refreshTokenApi = createAsyncThunk(
         try {
 
             const { refreshToken } = getState().auth;
-            const res = await api.post("/refresh", { refreshToken });
+            const res = await api.post("auth/refresh", { refreshToken });
             localStorage.setItem("authData", JSON.stringify({
                 ...getState().auth,
                 accessToken: res.data.data.accessToken
@@ -171,7 +171,7 @@ const authSlice = createSlice({
                 state.user = action.payload.user;
                 // state.accessToken = action.payload.accessToken;
                 // state.refreshToken = action.payload.refreshToken;
-                localStorage.setItem("loginUserData", JSON.stringify(state.user));
+                localStorage.setItem("user", JSON.stringify(state.user));
                 localStorage.setItem("accessToken", JSON.stringify(action.payload.accessToken));
 
             })
@@ -183,7 +183,7 @@ const authSlice = createSlice({
 
             .addCase(logoutUser.fulfilled, (state, action) => {
                 state.user = null;
-                localStorage.removeItem("loginUserData");
+                localStorage.removeItem("user");
                 localStorage.removeItem("accessToken");
                 state.error = action.payload?.message;
             })
@@ -226,7 +226,7 @@ const authSlice = createSlice({
                 state.error = null;
                 state.profile = action.payload?.data;
                 state.user = action.payload?.data;
-                localStorage.setItem("loginUserData", JSON.stringify(state.profile));
+                localStorage.setItem("user", JSON.stringify(state.profile));
 
             })
             .addCase(updateProfile.rejected, (state, action) => {

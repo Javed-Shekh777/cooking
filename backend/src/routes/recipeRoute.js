@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const upload = require("../config/multerconfig");
-const { suggestTags, addRecipe, addCategory, getCategories, getRecipes, getRecipe, updateRecipe, dashboard, getRecipesByCategory, getCategory,recipeLike,recipeSave,recipeShare,recipeView, addComment, getComments, toggleCommentLike, updateCategory, getRecommendedRecipes, submitRecipeRating } = require("../controllers/recipeController");
+const { suggestTags, addRecipe, addCategory, getCategories, getRecipes, getRecipe, updateRecipe, dashboard, getRecipesByCategory, getCategory,recipeLike,recipeSave,recipeShare,recipeView, addComment, getComments, toggleCommentLike, updateCategory, getRecommendedRecipes, submitRecipeRating, deleteComment } = require("../controllers/recipeController");
 const authenticated = require("../middlewares/authMiddleware");
 const allowRoles = require("../middlewares/checkRoles");
 const optionalAuthenticated = require("../middlewares/optionalAuthenticated");
@@ -56,8 +56,10 @@ router.route("/get-categories").get(getCategories);
 router.route("/get-category/:id").get(getCategory);
 
 router.route("/add-comment/:id").post(authenticated,addComment);
-router.route("/get-comments/:id").get(authenticated, getComments);
-router.route("/like-comments/:id").post(authenticated,toggleCommentLike);
+router.route("/get-comments/:id").get(getComments);
+router.route("/like-comment/:id").post(authenticated,toggleCommentLike);
+router.route("/delete-comment").delete(authenticated,deleteComment);
+
 
 
 
