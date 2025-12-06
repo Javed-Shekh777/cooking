@@ -7,7 +7,7 @@ import { FaFacebookF, FaTwitter, FaWhatsapp, FaLinkedinIn, FaTelegramPlane, FaEn
 
 
 
-export default function ShareOptions({ link, onClose }) {
+export default function ShareOptions({ handleShare,link, onClose }) {
   const [linkColor, setLinkColor] = useState('');
 
   const copyToClipboard = () => {
@@ -50,6 +50,7 @@ export default function ShareOptions({ link, onClose }) {
     }
 
     window.open(shareUrl, "_blank");
+    handleShare();
   };
 
 

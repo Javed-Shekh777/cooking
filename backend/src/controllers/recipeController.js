@@ -984,9 +984,11 @@ exports.deleteComment = async (req, res) => {
         return errorResponse(res, "Comment not found.", 404);
       }
 
-      await Recipe.findByIdAndUpdate(deletedComment.recipeId, {
-        $inc: { commentsCount: -1 }
-      });
+      const recipe = await Recipe.findById(deletedComment.recipeId);
+      if (recipe.commentsCount > 0) {
+        recipe.commentsCount = recipe.commentsCount - 1;
+      }
+      await recipe.save();
 
       return successResponse(res, "Main comment deleted", {
         deletedId: commentId,

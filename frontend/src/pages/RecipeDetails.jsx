@@ -159,24 +159,33 @@ const RecipeDetails = () => {
         setShowShareOption(true);
 
         // Use native Web Share API if available
-        if (navigator.share) {
-            try {
+        // if (navigator.share) {
+        //     try {
 
-                await navigator.share({
-                    title: recipe.title || 'Check out this recipe!',
-                    text: 'I found this amazing recipe!',
-                    url: window.location.href, // URL of the current page
-                });
-                const res = await dispatch(recipeShare(recipeId)).unwrap();
-                console.log("Shares count:", res.sharesCount);
-                console.log('Recipe shared successfully');
-            } catch (error) {
-                console.error('Error sharing:', error);
-            }
-        } else {
-            // Fallback for browsers that do not support the Web Share API (e.g., Safari on older desktop)
-            // You could open a modal with copy-to-clipboard functionality or social media links here.
-            alert('Web Share API is not supported in your browser. You can copy the URL from the address bar.');
+        //         await navigator.share({
+        //             title: recipe.title || 'Check out this recipe!',
+        //             text: 'I found this amazing recipe!',
+        //             url: window.location.href, // URL of the current page
+        //         });
+        //         const res = await dispatch(recipeShare(recipeId)).unwrap();
+        //         console.log("Shares count:", res.sharesCount);
+        //         console.log('Recipe shared successfully');
+        //     } catch (error) {
+        //         console.error('Error sharing:', error);
+        //     }
+        // } else {
+        //     // Fallback for browsers that do not support the Web Share API (e.g., Safari on older desktop)
+        //     // You could open a modal with copy-to-clipboard functionality or social media links here.
+        //     alert('Web Share API is not supported in your browser. You can copy the URL from the address bar.');
+        // }
+
+        try {
+            const res = await dispatch(recipeShare(recipeId)).unwrap();
+            console.log(res);
+            setShowShareOption(false);
+
+        } catch (err) {
+            console.log(err);
         }
     };
 
@@ -278,7 +287,6 @@ const RecipeDetails = () => {
                             <div
                                 onClick={() => {
                                     setShowShareOption(!showShareOption);
-                                    handleShare(); // ✅ backend update
                                 }}
                                 className="option group cursor-pointer flex flex-col items-center"
                             >
@@ -529,7 +537,7 @@ const RecipeDetails = () => {
                 </div>
             </section>
 
-            {showShareOption && <ShareOptions link={`${FRONTEND_URL}/category/${categoryId}/recipe/${recipeId}`} onClose={() => setShowShareOption(false)} />}
+            {showShareOption && <ShareOptions handleShare={handleShare} link={`${FRONTEND_URL}/category/${categoryId}/recipe/${recipeId}`} onClose={() => setShowShareOption(false)} />}
 
 
 

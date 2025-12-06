@@ -191,7 +191,7 @@ const AllRecipes = () => {
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <FaComment size={22} />
-                                            <span>{0}</span>
+                                            <span>{recp?.commentsCount ||0}</span>
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <FaShare size={22} />
