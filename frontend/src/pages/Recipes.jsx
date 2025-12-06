@@ -43,9 +43,9 @@ const Recipes = () => {
 
     useEffect(() => {
         if (selectedCategory === "All") {
-            dispatch(getRecipes());
+            dispatch(getRecipes({isPublished:true}));
         } else {
-            dispatch(getRecipes(selectedCategory));
+            dispatch(getRecipes({categoryId:selectedCategory,isPublished:true}));
         }
     }, [selectedCategory, dispatch]);
 

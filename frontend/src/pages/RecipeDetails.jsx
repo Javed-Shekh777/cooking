@@ -17,6 +17,7 @@ import { FaBookmark, FaHeart, FaStar, FaRegComment, FaRegHeart } from 'react-ico
 import { useState } from 'react';
 import ShareOptions from '../components/ShareOptions';
 import CommentsSection from '../components/CommentSection';
+import { FRONTEND_URL } from '../constans';
 
 const RecipeDetails = () => {
     const { categoryId, recipeId } = useParams();
@@ -75,7 +76,7 @@ const RecipeDetails = () => {
     //     setOpenMenuId(openMenuId === commentId ? null : commentId);
     // };
 
-   const toggleMoreMenu = (id) => setOpenMenuId(id);
+    const toggleMoreMenu = (id) => openMenuId === id ? setOpenMenuId(null) : setOpenMenuId(id);
 
 
     // ✅ Toggle visibility of replies for a specific comment
@@ -181,7 +182,7 @@ const RecipeDetails = () => {
 
 
     // Placeholder functions for More menu actions
-    const handleDeleteComment = async (commentId,replyId="") => {
+    const handleDeleteComment = async (commentId, replyId = "") => {
         if (!user) return alert("Please login first!");
 
         try {
@@ -524,15 +525,11 @@ const RecipeDetails = () => {
                             ))}
                         </div>
                     </div>
-
                     <MailBox />
-
-                    {/* Recommended */}
-
                 </div>
             </section>
 
-            {showShareOption && <ShareOptions link={"https://fsdf.com"} onClose={() => setShowShareOption(false)} />}
+            {showShareOption && <ShareOptions link={`${FRONTEND_URL}/category/${categoryId}/recipe/${recipeId}`} onClose={() => setShowShareOption(false)} />}
 
 
 

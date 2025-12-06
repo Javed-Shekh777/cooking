@@ -8,13 +8,50 @@ import { FaFacebookF, FaTwitter, FaWhatsapp, FaLinkedinIn, FaTelegramPlane, FaEn
 
 
 export default function ShareOptions({ link, onClose }) {
-    const [linkColor,setLinkColor] = useState('');
+  const [linkColor, setLinkColor] = useState('');
 
   const copyToClipboard = () => {
     setLinkColor("bg-blue-400 text-white");
-    setTimeout(()=>{setLinkColor('')},1000);
+    setTimeout(() => { setLinkColor('') }, 1000);
     navigator.clipboard.writeText(link);
   };
+
+
+  const shareOn = (platform, url) => {
+    let shareUrl = "";
+
+    switch (platform) {
+      case "facebook":
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+        break;
+
+      case "twitter":
+        shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}`;
+        break;
+
+      case "whatsapp":
+        shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(url)}`;
+        break;
+
+      case "linkedin":
+        shareUrl = `https://www.linkedin.com/shareArticle?url=${encodeURIComponent(url)}`;
+        break;
+
+      case "telegram":
+        shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}`;
+        break;
+
+      case "email":
+        shareUrl = `mailto:?subject=Check this out&body=${encodeURIComponent(url)}`;
+        break;
+
+      default:
+        return;
+    }
+
+    window.open(shareUrl, "_blank");
+  };
+
 
   return (
     <div className="fixed inset-0 z-50  bg-[rgba(0,0,0,0.3)] bg-opacity-50 flex items-center justify-center">
@@ -38,31 +75,35 @@ export default function ShareOptions({ link, onClose }) {
             onClick={copyToClipboard}
             className="text-sm text-blue-600 hover:underline cursor-pointer"
           >
-            {linkColor?"Copied":"Copy"}
+            {linkColor ? "Copied" : "Copy"}
           </button>
         </div>
 
         {/* Social Icons */}
         <div className="flex gap-4 overflow-x-auto pb-2">
-          <SocialIcon icon={<FaFacebookF />} label="Facebook" />
-          <SocialIcon icon={<FaTwitter />} label="Twitter" />
-          <SocialIcon icon={<FaWhatsapp />} label="WhatsApp" />
-          <SocialIcon icon={<FaLinkedinIn />} label="LinkedIn" />
-          <SocialIcon icon={<FaTelegramPlane />} label="Telegram" />
-          <SocialIcon icon={<FaEnvelope />} label="Email" />
+          <SocialIcon icon={<FaFacebookF />} label="Facebook" onClick={() => shareOn('facebook', link)} />
+          <SocialIcon icon={<FaTwitter />} label="Twitter" onClick={() => shareOn('twitter', link)} />
+          <SocialIcon icon={<FaWhatsapp />} label="WhatsApp" onClick={() => shareOn('whatsapp', link)} />
+          <SocialIcon icon={<FaLinkedinIn />} label="LinkedIn" onClick={() => shareOn('linkedin', link)} />
+          <SocialIcon icon={<FaTelegramPlane />} label="Telegram" onClick={() => shareOn('telegram', link)} />
+          <SocialIcon icon={<FaEnvelope />} label="Email" onClick={() => shareOn('email', link)} />
+
         </div>
       </div>
     </div>
   );
 }
 
-function SocialIcon({ icon, label }) {
+function SocialIcon({ icon, label, onClick }) {
   return (
     <div
-      className="flex-shrink-0 w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 cursor-pointer"
+      onClick={onClick}
+      className="flex-shrink-0 w-12 h-12 rounded-full bg-gray-100 
+      flex items-center justify-center hover:bg-gray-200 cursor-pointer"
       title={label}
     >
       <span className="text-xl text-gray-700">{icon}</span>
     </div>
   );
 }
+

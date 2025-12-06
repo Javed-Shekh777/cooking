@@ -5,6 +5,9 @@ import { useState } from 'react';
 import toast from "react-hot-toast"
 import { useDispatch, useSelector } from 'react-redux';
 import { contactUs } from '../features/authSlice';
+import { fetchRecommendations } from '../features/recipeSlice';
+
+import { useEffect } from 'react';
 
 const Contact = () => {
 
@@ -45,9 +48,13 @@ const Contact = () => {
     ]
 
     const dispatch = useDispatch();
-    const { loading } = useSelector((state) => state.auth);
+    // const { loading } = useSelector((state) => state.auth);
+    const { error, recommendRecipes, loading } = useSelector((state) => state.recipe);
+
 
     const enqType = ["General", "Support", "Feedback", "Other"];
+    console.log(recommendRecipes, error);
+
 
 
     const [contactForm, setContactForm] = useState({
@@ -63,6 +70,15 @@ const Contact = () => {
         const { name, value } = e.target;
         setContactForm({ ...contactForm, [name]: value });
     }
+
+    useEffect(() => {
+        dispatch(fetchRecommendations({
+            recipeId: null,
+            categoryId: null,
+            limit: 8,
+        }));
+
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -184,15 +200,32 @@ const Contact = () => {
                  ">
                     <MailBox />
 
-
+                    {/* 
                     <div className="bottom mt-20 mx-3">
                         <h1 className='title text-4xl font-semibold text-center my-4'>Check out the delicious recipe </h1>
                         <div className="recipesCards w-full grid lg:grid-cols-4 sm:grid-cols-2 lg:gap-14 gap-10">
                             {recipes.map((recp) => (
                                 <RecipieCard key={recp.id} title={recp.title} time={recp.time} type={recp.time} url={recp.imgUrl} isLiked={recp.isLiked} />
                             ))}
+
+                            {recommendRecipes?.length > 0 && recommendRecipes.map((recp) => (
+                                <RecipieCard key={recp._id} title={recp.title} prepTime={recp.prepTime} cookTime={recp.cookTime} url={recp?.dishImage?.url} difficultyLevel={recp?.difficultyLevel} />
+
+                                // <RecipieCard key={recp.id} title={recp.title} time={recp.time} type={recp.time} url={recp.imgUrl} isLiked={recp.isLiked} />
+                            ))}
+                        </div>
+                    </div> */}
+
+
+                    <div className="bottom my-20 no-print">
+                        <h1 className="title text-4xl font-semibold text-center my-4">You may like these recipes too</h1>
+                        <div className="recipesCards w-full grid lg:grid-cols-4 sm:grid-cols-2 lg:gap-14 gap-10">
+                            {recommendRecipes?.length > 0 && recommendRecipes?.map((recp) => (
+                                <RecipieCard key={recp._id} title={recp.title} prepTime={recp.prepTime} cookTime={recp.cookTime} url={recp?.dishImage?.url} />
+                            ))}
                         </div>
                     </div>
+
                 </div>
             </section>
 

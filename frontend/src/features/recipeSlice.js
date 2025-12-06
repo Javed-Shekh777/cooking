@@ -95,12 +95,13 @@ export const getCategories = createAsyncThunk("recipe/getCategories", async (_, 
     }
 })
 
-export const getRecipes = createAsyncThunk("recipe/getRecipes", async (categoryId = null, { rejectWithValue }) => {
+export const getRecipes = createAsyncThunk("recipe/getRecipes", async ({categoryId = null,isPublished=null}, { rejectWithValue }) => {
     try {
         const url = categoryId
-            ? `${recipeApis.getRecipes}?categoryId=${categoryId}`
-            : `${recipeApis.getRecipes}`;
+            ? `${recipeApis.getRecipes}?categoryId=${categoryId}&isPublished=${isPublished}`
+            : `${recipeApis.getRecipes}?isPublished=${isPublished}`;
         console.log("URL:", url);
+        console.log("fksdfndsfdsf")
 
         const res = await api.get(url);
         console.log(api);

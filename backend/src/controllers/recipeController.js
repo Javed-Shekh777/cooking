@@ -639,7 +639,7 @@ exports.updateCategory = async (req, res) => {
 
 exports.getRecommendedRecipes = async (req, res) => {
   try {
-    const { recipeId, categoryId, limit } = req.query;
+    const { recipeId, categoryId, limit, isPublished = false } = req.query;
 
     console.log("Received recipeId:", recipeId);
     console.log("Received categoryId:", categoryId);
@@ -657,6 +657,11 @@ exports.getRecommendedRecipes = async (req, res) => {
     }
 
     console.log("Final MongoDB Query:", query);
+    console.log("Final MongoDB Query:", query);
+    query.isPublished = true;
+
+    console.log(query);
+
 
     const recommendations = await Recipe.find(query)
       .limit(Number(limit) || 8)
@@ -665,7 +670,6 @@ exports.getRecommendedRecipes = async (req, res) => {
       )
       .lean();
 
-    console.log(`Found ${recommendations.length} recommendations.`);
 
     return successResponse(res, "Recommendations fetched", recommendations);
   } catch (error) {
@@ -739,24 +743,20 @@ exports.getCategories = async (req, res) => {
 exports.getRecipes = async (req, res) => {
   try {
     const { categoryId } = req.query;
+    const { isPublished } = req?.query;
+    console.log(req.query);
 
 
     let filter = {};
     if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
       filter.categoryId = categoryId;
     }
-
-
+    // filter.isPublished=true;
     const recipes = await Recipe.find(filter);
     console.log(recipes, categoryId);
-
-
     if (!recipes || recipes.length === 0) {
       return successResponse(res, "No recipes found.", []);
     }
-
-
-
     return successResponse(res, "Recipes fetched successfully.", recipes);
   } catch (error) {
     return errorResponse(res, error.message || "Failed to fetch recipes.", 500);
@@ -944,6 +944,11 @@ exports.addComment = async (req, res) => {
         .populate("user", "username profileImage")
         .populate("replies.user", "username profileImage");
 
+      await Recipe.findByIdAndUpdate(recipeId, {
+        $inc: { commentsCount: 1 }
+      });
+
+
       return successResponse(res, "Reply added successfully", updatedComment); // ✅ पूरा अपडेटेड कमेंट भेजें
 
     } else {
@@ -961,9 +966,9 @@ exports.addComment = async (req, res) => {
 };
 
 exports.deleteComment = async (req, res) => {
-  
+
   try {
-console.log(req.body);
+    console.log(req.body);
     const { commentId, replyId } = req.body;
     const userId = req.user._id;
 
@@ -979,9 +984,14 @@ console.log(req.body);
         return errorResponse(res, "Comment not found.", 404);
       }
 
+      await Recipe.findByIdAndUpdate(deletedComment.recipeId, {
+        $inc: { commentsCount: -1 }
+      });
+
       return successResponse(res, "Main comment deleted", {
         deletedId: commentId,
       });
+
     }
 
     // --------------------------------
@@ -1001,6 +1011,8 @@ console.log(req.body);
     // Remove the reply
     parentComment.replies.pull(replyId);
     await parentComment.save();
+
+
 
     return successResponse(res, "Reply deleted", {
       deletedId: replyId,

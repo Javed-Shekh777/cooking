@@ -2,20 +2,20 @@ import React from 'react';
 
 const teams = [
     { id: 1, url: "./profile/Ellipse 2 (4).jpg", name: "Anjali Verma", designation: "Pastry Chef" },
-    { id: 2, url: "./profile/Ellipse 2 (4).jpg", name: "Ravi Kapoor", designation: "Grill Master" },
-    { id: 3, url: "./profile/Ellipse 2 (4).jpg", name: "Meera Singh", designation: "Food Blogger" },
+    { id: 2, url: "./profile/Ellipse 2 (3).jpg", name: "Ravi Kapoor", designation: "Grill Master" },
+    { id: 3, url: "./profile/Ellipse 2 (1).jpg", name: "Meera Singh", designation: "Food Blogger" },
     { id: 4, url: "./profile/Ellipse 2 (4).jpg", name: "Arjun Das", designation: "Recipe Curator" },
-    { id: 5, url: "./profile/Ellipse 2 (4).jpg", name: "Neha Sharma", designation: "Nutritionist" },
-    { id: 6, url: "./profile/Ellipse 2 (4).jpg", name: "Karan Mehta", designation: "Sous Chef" },
-    { id: 7, url: "./profile/Ellipse 2 (4).jpg", name: "Priya Nair", designation: "Culinary Instructor" },
+    { id: 5, url: "./profile/Ellipse 2 (5).jpg", name: "Neha Sharma", designation: "Nutritionist" },
+    { id: 6, url: "./profile/Ellipse 2 (3).jpg", name: "Karan Mehta", designation: "Sous Chef" },
+    { id: 7, url: "./profile/Ellipse 2 (1).jpg", name: "Priya Nair", designation: "Culinary Instructor" },
     { id: 8, url: "./profile/Ellipse 2 (4).jpg", name: "Amit Joshi", designation: "Food Photographer" },
-    { id: 9, url: "./profile/Ellipse 2 (4).jpg", name: "Sneha Kulkarni", designation: "Recipe Developer" },
-    { id: 10, url: "./profile/Ellipse 2 (4).jpg", name: "Rahul Bhatia", designation: "Kitchen Manager" },
-    { id: 11, url: "./profile/Ellipse 2 (4).jpg", name: "Divya Rao", designation: "Home Chef" },
+    { id: 9, url: "./profile/Ellipse 2 (5).jpg", name: "Sneha Kulkarni", designation: "Recipe Developer" },
+    { id: 10, url: "./profile/Ellipse 2 (3).jpg", name: "Rahul Bhatia", designation: "Kitchen Manager" },
+    { id: 11, url: "./profile/Ellipse 2 (1).jpg", name: "Divya Rao", designation: "Home Chef" },
     { id: 12, url: "./profile/Ellipse 2 (4).jpg", name: "Manish Patel", designation: "Food Critic" },
-    { id: 13, url: "./profile/Ellipse 2 (4).jpg", name: "Isha Malhotra", designation: "Baking Expert" },
-    { id: 14, url: "./profile/Ellipse 2 (4).jpg", name: "Siddharth Jain", designation: "Catering Specialist" },
-    { id: 15, url: "./profile/Ellipse 2 (4).jpg", name: "Tanya Bhargava", designation: "Vegan Chef" },
+    { id: 13, url: "./profile/Ellipse 2 (5).jpg", name: "Isha Malhotra", designation: "Baking Expert" },
+    { id: 14, url: "./profile/Ellipse 2 (3).jpg", name: "Siddharth Jain", designation: "Catering Specialist" },
+    { id: 15, url: "./profile/Ellipse 2 (1).jpg", name: "Tanya Bhargava", designation: "Vegan Chef" },
 ];
 
 
@@ -60,7 +60,7 @@ const About = () => {
                 {/* <!-- Team Section --> */}
                 <div class="grid grid-cols-2 sm:grid-cols-4   xl:grid-cols-6 sm:gap-8 gap-5 ">
                     {teams?.map((t) => (
-                        <div key={t.id} className='rounded hover:shadow-xl'>
+                        <div key={t.id} className='rounded hover:shadow-xl py-2'>
                             <img src={t.url || "./profile/Ellipse 2 (5).jpg"} alt="Chef" class="sm:w-36 sm:h-36 w-28 h-28 mx-auto rounded-full object-cover mb-3" />
                             <h4 class="font-semibold text-center">{t.name}</h4>
                             <p class="text-sm text-gray-500 text-center">{t.designation}</p>

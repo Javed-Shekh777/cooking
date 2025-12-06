@@ -107,16 +107,16 @@ const AllRecipes = () => {
 
 
 
-   useEffect(() => {
-  dispatch(getRecipes());
-}, [dispatch]);
+    useEffect(() => {
+        dispatch(getRecipes({}));
+    }, [dispatch]);
 
 
     return (
         <section className='w-full h-full'>
             <div className="recipesWrapper py-6">
-                
-                        
+
+
                 <div className="recipes grid lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-6">
                     {
                         recipes.length > 0 ? recipes.map((recp) => (

@@ -34,7 +34,7 @@ const CategoryRecipe = () => {
     // Fetch recipe
     useEffect(() => {
         if (categoryId) {
-            dispatch(getRecipes(categoryId)).unwrap().catch(() => console.log("Recipe not found"));
+            dispatch(getRecipes({ categoryId, isPublished: true })).unwrap().catch(() => console.log("Recipe not found"));
         }
     }, [categoryId, dispatch]);
 
