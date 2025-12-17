@@ -7,7 +7,7 @@ export const authApis = {
     logout: "/auth/logout",
     contact: "/auth/contact",
     userProfile: "/auth/user-profile",
-    updateProfile: "/auth/update-profile"
+    updateProfile: "/auth/update-profile",
 };
 
 export const recipeApis = {
@@ -33,6 +33,8 @@ export const recipeApis = {
     recipeView: "/recipe/recipe-view",
     recipeSave: "/recipe/recipe-save",
     submitRecipeRating: "/recipe/recipe-rating",
+    
+
 
 
 
@@ -43,12 +45,20 @@ export const adminApis = {
     manageUsers: "/admin/manage-users",
     manageRecipes: "/admin/manage-recipes",
     manageCategories: "/admin/manage-categories",
+    // New 
+
+    getDeleteReq: "/recipe/get-delete-req",
+    updateDeleteReq:"/recipe/update-delete-req",
+    auditLog:"/recipe/get-auditlog"
 };
 export const chefApis = {
     chefDashboard: "/chef/dashboard",
     myRecipes: "/chef/my-recipes",
     addNewRecipe: "/chef/add-recipe",
     updateMyRecipe: "/chef/update-recipe",
+
+    // New 
+    deleteReq: "/recipe/delete-req",
 };
 export const moderatorApis = {
     moderatorDashboard: "/moderator/dashboard",

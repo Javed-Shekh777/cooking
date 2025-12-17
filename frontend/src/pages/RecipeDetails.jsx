@@ -158,27 +158,6 @@ const RecipeDetails = () => {
         // Optional: Make a backend call to increment share count
         setShowShareOption(true);
 
-        // Use native Web Share API if available
-        // if (navigator.share) {
-        //     try {
-
-        //         await navigator.share({
-        //             title: recipe.title || 'Check out this recipe!',
-        //             text: 'I found this amazing recipe!',
-        //             url: window.location.href, // URL of the current page
-        //         });
-        //         const res = await dispatch(recipeShare(recipeId)).unwrap();
-        //         console.log("Shares count:", res.sharesCount);
-        //         console.log('Recipe shared successfully');
-        //     } catch (error) {
-        //         console.error('Error sharing:', error);
-        //     }
-        // } else {
-        //     // Fallback for browsers that do not support the Web Share API (e.g., Safari on older desktop)
-        //     // You could open a modal with copy-to-clipboard functionality or social media links here.
-        //     alert('Web Share API is not supported in your browser. You can copy the URL from the address bar.');
-        // }
-
         try {
             const res = await dispatch(recipeShare(recipeId)).unwrap();
             console.log(res);

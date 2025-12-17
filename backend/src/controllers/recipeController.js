@@ -5,6 +5,8 @@ const Recipe = require("../models/recipeSchema");
 const User = require("../models/userModel");
 const RecipeLikeShareModel = require("../models/recipeLikes");
 const RecipeCommentModel = require("../models/recipeCommentShema");
+const Request = require("../models/deleteRequestSchema");
+const AuditLog = require("../models/auditLogSchema");
 
 
 const Tag = require("../models/tagSchema");
@@ -190,8 +192,7 @@ exports.addRecipe = async (req, res) => {
     });
 
     await RecipeCategorySchema.findByIdAndUpdate(categoryId, { $inc: { count: 1 } });
-
-    await logUserActivity(req.user._id, "RECIPE_ADDED", req);
+    await AuditLog.create({ action: "RECIPE_CREATED", performedBy: req.user._id, targetId: newDish._id, targetType: "RECIPE", })
 
     // Upsert tags
     for (let tag of parsedTags) {
@@ -427,8 +428,9 @@ exports.updateRecipe = async (req, res) => {
     for (const media of mediaToDelete) {
       await cloudinaryDelete(media.public_id, media.resource_type);
     }
+    await AuditLog.create({ action: "RECIPE_UPDATED", performedBy: req.user._id, targetId: updatedRecipe._id, targetType: "RECIPE", })
 
-    await logUserActivity(req.user._id, "RECIPE_UPDATED", req);
+
 
     for (let tag of parsedTags) {
       await Tag.updateOne({ name: tag }, { name: tag }, { upsert: true });
@@ -487,7 +489,8 @@ exports.deleteRecipe = async (req, res) => {
     }
 
     // Log activity
-    await logUserActivity(req.user._id, "RECIPE_DELETED", id);
+    await AuditLog.create({ action: "RECIPE_DELETED", performedBy: req.user._id, targetId: recipe._id, targetType: "RECIPE", })
+
 
     return successResponse(res, "Recipe deleted successfully.");
   } catch (error) {
@@ -562,7 +565,8 @@ exports.addCategory = async (req, res) => {
     }
 
     // Log user activity
-    await logUserActivity(req.user?._id, "NEW_CATEGORY_ADDED", req);
+    await AuditLog.create({ action: "CATEGORY_CREATED", performedBy: req.user._id, targetId: category._id, targetType: "CATEGORY", })
+
 
     return successResponse(res, "Category saved successfully.", category);
   } catch (error) {
@@ -582,7 +586,7 @@ exports.updateCategory = async (req, res) => {
       return errorResponse(res, "This category name is already in use by another category.", 400);
     }
 
-    const category = await RecipeCategorySchema.findById(id);
+    const category = await RecipeCategorySchema.findOne({ _id: id, isActive: true, isDeleted: false });
     if (!category) {
       return errorResponse(res, "Category not found.", 404);
     }
@@ -624,6 +628,8 @@ exports.updateCategory = async (req, res) => {
     if (!updatedCategory) {
       return errorResponse(res, "Category not found after update.", 404);
     }
+
+    await AuditLog.create({ action: "CATEGORY_UPDATED", performedBy: req.user._id, targetId: updatedCategory._id, targetType: "CATEGORY", })
 
     return successResponse(res, "Category updated successfully", updatedCategory);
 
@@ -717,7 +723,8 @@ exports.deleteCategoryCascade = async (req, res) => {
     await RecipeCategorySchema.findByIdAndDelete(categoryId);
 
     // Log activity
-    await logUserActivity(req.user._id, "CATEGORY_CASCADE_DELETED", categoryId);
+    await AuditLog.create({ action: "CATEGORY_DELETED", performedBy: req.user._id, targetId: categoryId, targetType: "CATEGORY", })
+
 
     return successResponse(res, "Category and all related recipes deleted successfully.");
   } catch (error) {
@@ -728,7 +735,11 @@ exports.deleteCategoryCascade = async (req, res) => {
 
 exports.getCategories = async (req, res) => {
   try {
-    const categories = await RecipeCategorySchema.find();
+    const categories = await RecipeCategorySchema.find({
+      // isActive: true,
+      // isDeleted: { $ne: true }
+    });
+
     if (categories.length <= 0) {
       return errorResponse(res, "Category fetch failed.", 401);
     }
@@ -748,10 +759,12 @@ exports.getRecipes = async (req, res) => {
 
 
     let filter = {};
+
     if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
       filter.categoryId = categoryId;
     }
     // filter.isPublished=true;
+    // filter.isDeleted = false;
     const recipes = await Recipe.find(filter);
     console.log(recipes, categoryId);
     if (!recipes || recipes.length === 0) {
@@ -796,7 +809,7 @@ exports.getRecipe = async (req, res) => {
     }
 
     const userId = req.user?._id;
-    const recipe = await Recipe.findById(id).populate({
+    const recipe = await Recipe.findOne({ _id: id, isDeleted: false }).populate({
       path: "author",
       select: "profilePic username email"
     });
@@ -841,7 +854,7 @@ exports.getCategory = async (req, res) => {
       return errorResponse(res, "Category ID is required.", 400);
     }
 
-    const category = await RecipeCategorySchema.findById(id);
+    const category = await RecipeCategorySchema.findOne({ _id: id, isDeleted: false });
 
     if (!category) {
       return errorResponse(res, "Category not found.", 404);
@@ -984,7 +997,7 @@ exports.deleteComment = async (req, res) => {
         return errorResponse(res, "Comment not found.", 404);
       }
 
-      const recipe = await Recipe.findById(deletedComment.recipeId);
+      const recipe = await Recipe.findOne({ _id: deletedComment.recipeId, isDeleted: false });
       if (recipe.commentsCount > 0) {
         recipe.commentsCount = recipe.commentsCount - 1;
       }
@@ -1078,7 +1091,7 @@ exports.recipeLike = async (req, res) => {
     const { recipeId } = req.body;
     const userId = req.user._id;
 
-    const recipe = await Recipe.findById(recipeId);
+    const recipe = await Recipe.findOne({ _id: recipeId, isDeleted: false });
     if (!recipe) return errorResponse(res, "Recipe not found.", 400);
 
     let isLiked = false;
@@ -1134,7 +1147,8 @@ exports.recipeSave = async (req, res) => {
     const { recipeId } = req.body;
     const userId = req.user._id;
 
-    const recipe = await Recipe.findById(recipeId);
+    const recipe = await Recipe.findOne({ _id: recipeId, isDeleted: false });
+
     if (!recipe) return errorResponse(res, "Recipe not found.", 400);
 
     let isSaved = false;
@@ -1189,7 +1203,8 @@ exports.submitRecipeRating = async (req, res) => {
     console.log(userId);
 
 
-    const recipe = await Recipe.findById(recipeId);
+    const recipe = await Recipe.findOne({ _id: recipeId, isDeleted: false });
+
     console.log(recipe);
 
     const existingRatingIndex = recipe?.ratings.findIndex(r => r.user.toString() === userId.toString());
@@ -1224,7 +1239,105 @@ exports.submitRecipeRating = async (req, res) => {
 };
 
 
+exports.deleteRequest = async (req, res) => {
+  try {
+    const { id, itemType, reason } = req.body;
+    if (!id || !itemType || !reason) {
+      return errorResponse(res, "All fields are required.", 402);
+    }
+
+    let exist;
+
+    if (itemType === "RECIPE") {
+
+      const exist = await Recipe.findOne({
+        _id: id,
+      });
+
+
+      if (!exist) {
+        return errorResponse(res, "Recipe not found.", 404);
+      }
+    } else if (itemType === "CATEGORY") {
+      exist = await RecipeCategorySchema.findOne({ _id: id });
+      if (!exist) {
+        return errorResponse(res, "Category not found.", 404);
+      }
+    }
+
+    const request = await Request.create({
+      itemId: id,
+      itemType,
+      reason,
+      requestedBy: req?.user?._id,
+    });
+
+    const createdRequest = await Request.findById(request._id);
+    if (!createdRequest) {
+      return errorResponse(res, "Request not created.", 402);
+    }
+    await AuditLog.create({ action: "DELETE_REQUESTED", performedBy: req.user._id, targetId: id, targetType: itemType })
+
+    return successResponse(res, "Request send successfully", createdRequest);
+
+
+  } catch (error) {
+    console.log(error);
+    return errorResponse(res, error.message || "Delete Request failed.", 500);
+  }
+
+}
+
+
+exports.getDeleteRequests = async (req, res) => {
+  try {
+
+    const requests = await Request.find().populate({
+      path: "requestedBy",
+      select: "profileImage username email"
+    }).populate("itemId");
+    return successResponse(res, "Request fetched successfully", requests);
+  } catch (error) {
+    console.log(error);
+    return errorResponse(res, error.message || "Get submission failed.", 500);
+  }
+
+}
 
 
 
 
+
+exports.updateDeleteReq = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    if (!id) return errorResponse(res, "Id is required.", 402);
+    if (!status) return errorResponse(res, "Status is required.", 402);
+    const request = await Request.findByIdAndUpdate(id, { $set: { status } });
+    if (!request) {
+      return errorResponse(res, "Request not found.");
+    }
+    await AuditLog.create({ action: status === "APPROVED" ? "DELETE_APPROVED" : "DELETE_REJECTED", performedBy: req.user._id, targetId: request.itemId, targetType: request.itemType })
+
+    return successResponse(res, `Request ${status} successfully`, request);
+  } catch (error) {
+    console.log(error);
+    return errorResponse(res, error.message || "Update submission failed.", 500);
+  }
+}
+
+exports.getAuditLog = async (req, res) => {
+  try {
+
+    const audit = await AuditLog.find().populate({
+      path: "performedBy",
+      select: "profileImage username email"
+    }).populate("targetId");
+    return successResponse(res, "Audit fetched successfully", audit);
+  } catch (error) {
+    console.log(error);
+    return errorResponse(res, error.message || "Rating submission failed.", 500);
+  }
+
+}

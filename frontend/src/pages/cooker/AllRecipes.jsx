@@ -7,6 +7,8 @@ import { LuUsers } from "react-icons/lu";
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getRecipes } from '../../features/recipeSlice';
+import { useState } from 'react';
+import DeletionRequestForm from '../../components/DeletionRequestForm';
 
 const tagColors = [
     "bg-red-200 text-red-700",
@@ -21,88 +23,91 @@ const tagColors = [
 
 const AllRecipes = () => {
 
-    const recipess = [
-        {
-            id: 1,
-            title: "Milk shake",
-            prepTime: "20 min",
-            cookTime: "30 min",
-            tags: ["Jeera", 'Bread'],
-            likes: 200,
-            share: 100,
-            comment: 300,
-            pic: "/reciepies/resp1.jpg"
-        },
-        {
-            id: 2,
-            title: "Milk shake",
-            prepTime: "20 min",
-            cookTime: "30 min",
-            tags: ["Jeera", 'Bread'],
-            likes: 200,
-            share: 100,
-            comment: 300,
-            pic: "/reciepies/resp1.jpg"
-        },
-        {
-            id: 3,
-            title: "Milk shake",
-            prepTime: "20 min",
-            cookTime: "30 min",
-            tags: ["Jeera", 'Bread'],
-            likes: 200,
-            share: 100,
-            comment: 300,
-            pic: "/reciepies/resp1.jpg"
-        },
-        {
-            id: 4,
-            title: "Milk shake",
-            prepTime: "20 min",
-            cookTime: "30 min",
-            tags: ["Jeera", 'Bread'],
-            likes: 200,
-            share: 100,
-            comment: 300,
-            pic: "/reciepies/resp1.jpg"
-        },
-        {
-            id: 5,
-            title: "Milk shake",
-            prepTime: "20 min",
-            cookTime: "30 min",
-            tags: ["Jeera", 'Bread'],
-            likes: 200,
-            share: 100,
-            comment: 300,
-            pic: "/reciepies/resp1.jpg"
-        },
-        {
-            id: 6,
-            title: "Milk shake",
-            prepTime: "20 min",
-            cookTime: "30 min",
-            tags: ["Jeera", 'Bread'],
-            likes: 200,
-            share: 100,
-            comment: 300,
-            pic: "/reciepies/resp1.jpg"
-        },
-        {
-            id: 7,
-            title: "Milk shake",
-            prepTime: "20 min",
-            cookTime: "30 min",
-            tags: ["Jeera", 'Bread'],
-            likes: 200,
-            share: 100,
-            comment: 300,
-            pic: "/reciepies/resp1.jpg"
-        },
-    ];
+    // const recipess = [
+    //     {
+    //         id: 1,
+    //         title: "Milk shake",
+    //         prepTime: "20 min",
+    //         cookTime: "30 min",
+    //         tags: ["Jeera", 'Bread'],
+    //         likes: 200,
+    //         share: 100,
+    //         comment: 300,
+    //         pic: "/reciepies/resp1.jpg"
+    //     },
+    //     {
+    //         id: 2,
+    //         title: "Milk shake",
+    //         prepTime: "20 min",
+    //         cookTime: "30 min",
+    //         tags: ["Jeera", 'Bread'],
+    //         likes: 200,
+    //         share: 100,
+    //         comment: 300,
+    //         pic: "/reciepies/resp1.jpg"
+    //     },
+    //     {
+    //         id: 3,
+    //         title: "Milk shake",
+    //         prepTime: "20 min",
+    //         cookTime: "30 min",
+    //         tags: ["Jeera", 'Bread'],
+    //         likes: 200,
+    //         share: 100,
+    //         comment: 300,
+    //         pic: "/reciepies/resp1.jpg"
+    //     },
+    //     {
+    //         id: 4,
+    //         title: "Milk shake",
+    //         prepTime: "20 min",
+    //         cookTime: "30 min",
+    //         tags: ["Jeera", 'Bread'],
+    //         likes: 200,
+    //         share: 100,
+    //         comment: 300,
+    //         pic: "/reciepies/resp1.jpg"
+    //     },
+    //     {
+    //         id: 5,
+    //         title: "Milk shake",
+    //         prepTime: "20 min",
+    //         cookTime: "30 min",
+    //         tags: ["Jeera", 'Bread'],
+    //         likes: 200,
+    //         share: 100,
+    //         comment: 300,
+    //         pic: "/reciepies/resp1.jpg"
+    //     },
+    //     {
+    //         id: 6,
+    //         title: "Milk shake",
+    //         prepTime: "20 min",
+    //         cookTime: "30 min",
+    //         tags: ["Jeera", 'Bread'],
+    //         likes: 200,
+    //         share: 100,
+    //         comment: 300,
+    //         pic: "/reciepies/resp1.jpg"
+    //     },
+    //     {
+    //         id: 7,
+    //         title: "Milk shake",
+    //         prepTime: "20 min",
+    //         cookTime: "30 min",
+    //         tags: ["Jeera", 'Bread'],
+    //         likes: 200,
+    //         share: 100,
+    //         comment: 300,
+    //         pic: "/reciepies/resp1.jpg"
+    //     },
+    // ];
 
     const { recipes, loading } = useSelector((state) => state.recipe);
+    const [showDelForm, setShowDelForm] = useState(false);
+
     const dispatch = useDispatch();
+    const [selectedItem, setSelectedItem] = useState(null);
     console.log(recipes);
 
 
@@ -191,7 +196,7 @@ const AllRecipes = () => {
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <FaComment size={22} />
-                                            <span>{recp?.commentsCount ||0}</span>
+                                            <span>{recp?.commentsCount || 0}</span>
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <FaShare size={22} />
@@ -201,14 +206,14 @@ const AllRecipes = () => {
 
                                     {/* Actions */}
                                     <div className="flex gap-3 items-center justify-end mt-3">
-                                        <a
+                                        {/* <a
                                             href='/'
 
                                             title="View"
                                             className="h-9 w-9 cursor-pointer rounded-full flex items-center justify-center bg-gray-100 hover:bg-yellow-500 hover:text-white transition"
                                         >
                                             <FaEye size={18} />
-                                        </a>
+                                        </a> */}
                                         <a
                                             href={`/chef/recipe/edit/${recp._id}`}
                                             title="Edit"
@@ -216,13 +221,15 @@ const AllRecipes = () => {
                                         >
                                             <MdEdit size={20} />
                                         </a>
-                                        <button
+                                        <a
+                                            href='#deletionRequestForm'
+                                            onClick={() => { setSelectedItem(recp?._id); setShowDelForm(!showDelForm) }}
                                             type='button'
                                             title="Delete"
                                             className="h-9 w-9 cursor-pointer rounded-full flex items-center justify-center bg-gray-100 hover:bg-red-500 hover:text-white transition"
                                         >
                                             <MdDelete size={20} />
-                                        </button>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -231,6 +238,7 @@ const AllRecipes = () => {
                 </div>
 
             </div>
+            {showDelForm && <DeletionRequestForm onClose={() => setShowDelForm(false)} id={selectedItem} type='RECIPE' />}
         </section>
     )
 }
@@ -238,11 +246,6 @@ const AllRecipes = () => {
 export default AllRecipes
 
 
-{/* <div className="flex items-center gap-x-2">
-                                <p className="">Prep Time: </p>
-                                <p>{recp.prepTime}</p>
-                            </div>
-                            <div className="flex items-center gap-x-2">
-                                <p className="">Cook Time: </p>
-                                <p>{recp.cookTime}</p>
-                            </div> */}
+
+
+

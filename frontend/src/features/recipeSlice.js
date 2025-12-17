@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import api from "../utils/axios";
-import { recipeApis } from "../constans/ApisUtils";
+import { adminApis, chefApis, recipeApis } from "../constans/ApisUtils";
 // const initialState = {
 //     suggestTags: [],
 //     categories: [],
@@ -34,6 +34,9 @@ const initialState = {
     category: null,
     comments: [],
     recommendRecipes: [],
+    requests: [],
+    auditLog:[]
+
 };
 
 
@@ -95,7 +98,7 @@ export const getCategories = createAsyncThunk("recipe/getCategories", async (_, 
     }
 })
 
-export const getRecipes = createAsyncThunk("recipe/getRecipes", async ({categoryId = null,isPublished=null}, { rejectWithValue }) => {
+export const getRecipes = createAsyncThunk("recipe/getRecipes", async ({ categoryId = null, isPublished = null }, { rejectWithValue }) => {
     try {
         const url = categoryId
             ? `${recipeApis.getRecipes}?categoryId=${categoryId}&isPublished=${isPublished}`
@@ -313,25 +316,25 @@ export const addComment = createAsyncThunk("recipe/addComment", async (data, { r
 });
 
 export const deleteComment = createAsyncThunk(
-  "recipe/deleteComment",
-  async (data, { rejectWithValue }) => {
-    try {
-      console.log("Delete Data: ", data);
+    "recipe/deleteComment",
+    async (data, { rejectWithValue }) => {
+        try {
+            console.log("Delete Data: ", data);
 
-      const res = await api.delete(recipeApis.deleteComment, {
-        data: data,  // <-- Yaha body send hoti hai
-      });
+            const res = await api.delete(recipeApis.deleteComment, {
+                data: data,  // <-- Yaha body send hoti hai
+            });
 
-      console.log("Delete Response:", res.data);
+            console.log("Delete Response:", res.data);
 
-      return res.data;
-    } catch (error) {
-      console.log("Delete Error:", error);
-      return rejectWithValue(
-        error?.response?.data || "Failed to delete comment/reply"
-      );
+            return res.data;
+        } catch (error) {
+            console.log("Delete Error:", error);
+            return rejectWithValue(
+                error?.response?.data || "Failed to delete comment/reply"
+            );
+        }
     }
-  }
 );
 
 
@@ -360,6 +363,66 @@ export const toggleCommentLike = createAsyncThunk("recipe/toggleCommentLike", as
         return rejectWithValue(error?.response?.data || "Falied to share dish");
     }
 });
+
+
+
+
+// Chef → Request delete
+export const requestDelete = createAsyncThunk(
+    "deleteRequest/requestDelete",
+    async ({ id, itemType, reason }, { rejectWithValue }) => {
+        try {
+            const res = await api.post(chefApis.deleteReq, { id, itemType, reason });
+            return res.data;
+        } catch (err) {
+            console.log(err);
+            return rejectWithValue(err.response?.data || "Delete request failed");
+        }
+    }
+);
+
+// Admin → Fetch requests
+export const fetchDeleteRequests = createAsyncThunk(
+    "deleteRequest/fetchAll",
+    async (_, { rejectWithValue }) => {
+        try {
+            const res = await api.get(adminApis.getDeleteReq);
+            console.log(res.data);
+            return res.data;
+        } catch (err) {
+            return rejectWithValue(err.response?.data);
+        }
+    }
+);
+
+// Admin → Approve / Reject
+export const updateDeleteRequestStatus = createAsyncThunk(
+    "deleteRequest/updateStatus",
+    async ({ requestId, status }, { rejectWithValue }) => {
+        try {
+            const res = await api.patch(`${adminApis.updateDeleteReq}/${requestId}`, {
+                status // APPROVED | REJECTED
+            });
+            return res.data;
+        } catch (err) {
+            return rejectWithValue(err.response?.data);
+        }
+    }
+);
+
+export const fetchAuditLogs = createAsyncThunk(
+    "deleteRequest/fetchAuditLogs",
+    async (_, { rejectWithValue }) => {
+        try {
+            const res = await api.get(adminApis.auditLog);
+            console.log(res.data);
+            return res.data;
+        } catch (err) {
+            return rejectWithValue(err.response?.data);
+        }
+    }
+);
+
 
 
 const recipeSlice = createSlice({
@@ -720,6 +783,35 @@ const recipeSlice = createSlice({
                 }
 
                 state.recipeMeta.userRating = submittedRating;
+            })
+
+
+
+
+            .addCase(requestDelete.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(requestDelete.fulfilled, (state) => {
+                state.loading = false;
+            })
+            .addCase(requestDelete.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+
+            .addCase(fetchDeleteRequests.fulfilled, (state, action) => {
+                state.requests = action.payload.data;
+            })
+
+            .addCase(updateDeleteRequestStatus.fulfilled, (state, action) => {
+                state.requests = state.requests.map((req) =>
+                    req._id === action.payload.data._id ? action.payload.data : req
+                );
+            })
+
+
+              .addCase(fetchAuditLogs.fulfilled, (state, action) => {
+                state.auditLog = action.payload.data;
             })
 
 

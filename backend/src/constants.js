@@ -3,11 +3,13 @@ const SchemaName = {
     userLog: "UserLog",
     recipe: "Recipe",
     recipeLike: "RecipeLike",
-    tag:"Tag",
-    recipeCategory:"recipeCategory",
-    contact:"Contact",
-    replpy:"Reply",
-    recipeComment:"RecipeComment",
+    tag: "Tag",
+    recipeCategory: "recipeCategory",
+    contact: "Contact",
+    replpy: "Reply",
+    recipeComment: "RecipeComment",
+    deleteRequest: "DeleteRequest",
+    auditLog:"auditLog"
 
 }
 
@@ -21,7 +23,7 @@ const cloudinaryConfig = {
     cloud_name: process.env.CLOUDINARY_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
-    secure:true,
+    secure: true,
 }
 // DB_URL=mongodb+srv://mdjavedshekh1210:javed1210@cluster1.jt6wkhm.mongodb.net/cooking?retryWrites=true&w=majority&appName=AtlasApp
 
@@ -30,18 +32,18 @@ const dbUrl = process.env.DB_URL || "";
 const dbName = process.env.DATABASE || "";
 
 const MONGODB_URL =
-  dbUrl.length <= 30
-    ? `${dbUrl}/${dbName}`
-    : `${dbUrl}/${dbName}?retryWrites=true&w=majority&appName=AtlasApp`;
+    dbUrl.length <= 30
+        ? `${dbUrl}/${dbName}`
+        : `${dbUrl}/${dbName}?retryWrites=true&w=majority&appName=AtlasApp`;
 
 const PORT = process.env.PORT;
 console.log(process.env.FRONTEND);
 const allowedOrigins = [
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "https://cookify-ruby-eight.vercel.app",
-  "http://10.75.250.127:5173",
-  process.env.FRONTEND,
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://cookify-ruby-eight.vercel.app",
+    "http://10.75.250.127:5173",
+    process.env.FRONTEND,
 ];
 
 // const allowedOrigins = ["http://localhost:5173","https://cookify-ruby-eight.vercel.app","http://10.75.250.127:5173",process.env.FRONTEND];
@@ -61,4 +63,4 @@ const mailOptions = {
     ownerEmail: process.env.OWNER_EMAIL
 };
 
-module.exports = { SchemaName, SALT, Tokens, MONGODB_URL, PORT, allowedOrigins, mailOptions, cloudinaryFolderNames ,cloudinaryConfig};
+module.exports = { SchemaName, SALT, Tokens, MONGODB_URL, PORT, allowedOrigins, mailOptions, cloudinaryFolderNames, cloudinaryConfig };

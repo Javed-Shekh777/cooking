@@ -23,6 +23,11 @@ import CategoryRecipe from "../pages/CategoryRecipe";
 import Profile from "../pages/Profile";
 import Favorites from "../pages/Favourites";
 import About from "../pages/About";
+import AdminLayout from "../pages/admin/AdminLayout";
+import AdminRecipes from "../pages/admin/AdminRecipes";
+import AdminDeleteRequests from "../pages/admin/AdminDeleteRequests";
+import AuditLogs from "../pages/admin/AuditLogs";
+
 
 const router = createBrowserRouter([
     {
@@ -70,6 +75,15 @@ const router = createBrowserRouter([
 
                 ]
             },
+            {path:"admin",
+                element:<AdminLayout />,
+                children:[
+                    {path:"recipes",element:<AdminRecipes />},
+                    {path:"delreq",element:<AdminDeleteRequests />},
+                    {path:"auditlog",element:<AuditLogs/>}
+
+                ]
+            }
         ]
     }
 ]);

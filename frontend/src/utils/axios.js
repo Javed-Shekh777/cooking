@@ -14,7 +14,7 @@ const api = axios.create({
 // -------------- REQUEST INTERCEPTOR ---------------- //
 
 api.interceptors.request.use((config) => {
-  const accessToken = JSON.parse(localStorage.getItem("accessToken"));
+  const accessToken = localStorage.getItem("accessToken");
   console.log(accessToken);
 
   if (accessToken) {

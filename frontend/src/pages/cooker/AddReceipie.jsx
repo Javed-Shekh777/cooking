@@ -356,6 +356,10 @@ export default function AddReceipie({ mode = "add" }) {
         forLoading ? <div className="fixed h-screen w-screen bg-transparent flex items-center justify-center"> <Spinner /></div> : (<div className="max-w-4xl mx-auto sm:p-6 p-3 rounded-2xl border shadow">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold mb-6">Add / Edit Recipe</h1>
+           <p className="text-red-500 font-bold">
+  Once Recipe created then not can be deleted!!!
+</p>
+
             <div>
               {user && (
                 <><img src={user?.profilePic?.url || "/profile/user.jpg"} alt="author" className="mt-2 h-15 w-15 object-cover rounded" />

@@ -13,6 +13,7 @@ import { } from 'react-icons/md';
 import { GiCookingPot } from "react-icons/gi";
 import { LuUsers } from "react-icons/lu";
 import { useParams } from 'react-router-dom';
+import DeletionRequestForm from '../../components/DeletionRequestForm';
 
 const AllCategory = () => {
 
@@ -20,6 +21,8 @@ const AllCategory = () => {
     const [selectedCategoryId, setSelectedCategoryId] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const dispatch = useDispatch();
+    const [showDelForm, setShowDelForm] = useState(false);
+
 
     const handleEditClick = (id) => {
         setSelectedCategoryId(id);
@@ -28,11 +31,11 @@ const AllCategory = () => {
     };
 
 
-    const closeForm = ()=> setShowForm(false);
-    const openForm = ()=> setShowForm(true);
+    const closeForm = () => setShowForm(false);
+    const openForm = () => setShowForm(true);
 
 
-    const toggleForm  = () => {
+    const toggleForm = () => {
         setCurrentMode('add');
         setSelectedCategoryId(null);
     };
@@ -75,20 +78,20 @@ const AllCategory = () => {
                                     <span className="text-3xl">{cat.icon}</span>
                                 </div>
                                 <p className="text-sm mt-1">{cat.description}</p>
-                                <p className="text-sm mt-2 bg-yellow-500/80 inline-block w-fit px-2 py-1 rounded-full">
-                                    {cat.count} recipes
+                                <p title="Recipe Count" className="text-sm mt-2 bg-yellow-500/80 inline-block w-fit px-2 py-1 rounded-full">
+                                    {cat.count}
                                 </p>
                             </div>
 
                             <div className="relative z-[1000] flex gap-3 items-center justify-end m-3">
-                                <a
+                                {/* <a
                                     href='/'
 
                                     title="View"
                                     className="h-9 w-9 cursor-pointer rounded-full flex items-center justify-center bg-gray-100 hover:bg-yellow-500 hover:text-white transition"
                                 >
                                     <FaEye size={18} />
-                                </a>
+                                </a> */}
                                 <button
                                     type='button'
                                     title="Edit"
@@ -97,13 +100,15 @@ const AllCategory = () => {
                                 >
                                     <MdEdit size={20} />
                                 </button>
-                                <button
+                                <a
+                                    href='#deletionRequestForm'
+                                    onClick={() => { setSelectedCategoryId(cat?._id); setShowDelForm(!showDelForm) }}
                                     type='button'
                                     title="Delete"
                                     className="h-9 w-9 cursor-pointer rounded-full flex items-center justify-center bg-gray-100 hover:bg-red-500 hover:text-white transition"
                                 >
                                     <MdDelete size={20} />
-                                </button>
+                                </a>
                             </div>
                         </div>
                     ))}
@@ -121,6 +126,8 @@ const AllCategory = () => {
                         />
                     </div>}
             </div>
+            {showDelForm && <DeletionRequestForm onClose={() => setShowDelForm(false)} id={selectedCategoryId} type='CATEGORY' />}
+
 
         </section>
 
@@ -274,7 +281,7 @@ export default AllCategory
 
 
 
-const CategoryForm = ({ onSubmit, toggleForm, mode, id,closeForm }) => {
+const CategoryForm = ({ onSubmit, toggleForm, mode, id, closeForm }) => {
     console.log(id);
 
     const dispatch = useDispatch();
@@ -351,18 +358,15 @@ const CategoryForm = ({ onSubmit, toggleForm, mode, id,closeForm }) => {
             if (mode === "edit" && id) {
                 res = await dispatch(updateCategory({ id, formData: form })).unwrap();
                 toast.success(res.message || "Category updated successfully.");
-                toggleForm();
-
             } else {
                 res = await dispatch(addCategory(form)).unwrap();
                 toast.success(res.message || "Category added successfully.");
-                toggleForm();
-
             }
+            closeForm();
+
 
         } catch (error) {
-            toggleForm();
-
+            closeForm();
             toast.error(error.message || "Operation failed.");
         }
     }
@@ -373,6 +377,10 @@ const CategoryForm = ({ onSubmit, toggleForm, mode, id,closeForm }) => {
             encType='multipart/form-data'
             className="flex flex-col gap-4 lg:w-[60%] w-full shadow p-3 rounded-2xl"
         >
+            <p className="text-red-500 font-bold">
+                Once Category created then not can be deleted!!!
+            </p>
+
             <div className="createBtn flex justify-end">
                 <RxCross1 onClick={closeForm} size={25} className="cursor-pointer" />
             </div>
@@ -388,7 +396,9 @@ const CategoryForm = ({ onSubmit, toggleForm, mode, id,closeForm }) => {
             <div>
                 <p title='select icon' onClick={() => setShowPicker(!showPicker)} className='font-semibold cursor-pointer '>Select Icon: <span className="text-2xl ml-2 p-1 rounded border mb-3">{icon}</span></p>
                 {formError.name === "icon" && <p className='text-red-500 text-sm'>{formError.value}</p>}
-                {showPicker && <Picker /* ... */ />}
+                {showPicker && <Picker
+                    className='top-2' onEmojiClick={(event, emojiObject) => { setIcon(event.emoji); setShowPicker(false) }}
+                />}
             </div>
 
             {/* Image Input (remains the same) */}

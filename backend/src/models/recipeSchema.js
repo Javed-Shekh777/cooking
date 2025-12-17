@@ -107,6 +107,15 @@ const recipeSchema = new mongoose.Schema(
     avgRating: { type: Number, default: 0 },
     totalRatings: { type: Number, default: 0 },
 
+    isDeleted: {
+      type: Boolean,
+      default: false
+    },
+    deletedAt: { type: Date },
+    deletedBy: {
+      type: mongoose.Types.ObjectId,
+      ref: SchemaName.user
+    },
     likes: [{ type: mongoose.Types.ObjectId, ref: SchemaName.user }],
     saves: [{ type: mongoose.Types.ObjectId, ref: SchemaName.user }], // ✅ saved recipes
     views: [{ type: mongoose.Types.ObjectId, ref: SchemaName.user }],
