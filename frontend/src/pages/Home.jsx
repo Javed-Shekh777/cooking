@@ -124,7 +124,9 @@ const Home = () => {
 
     const dispatch = useDispatch();
     const { error, loading, categories,recommendRecipes } = useSelector((state) => state.recipe);
-    console.log(categories);
+  const { user, authChecked } = useSelector((state) => state.auth);
+
+    console.log(authChecked,user);
 
     useEffect(() => {
         let mounted = true;

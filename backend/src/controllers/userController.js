@@ -10,6 +10,9 @@ const { cloudinaryUpload, cloudinaryDelete } = require("../util/cloudinary");
 
 
 
+
+
+
 exports.localRegister = async (req, res, next) => {
     const session = await User.startSession();
     session.startTransaction();
@@ -40,7 +43,15 @@ exports.localRegister = async (req, res, next) => {
             fullName
         }], { session });
 
-        await verifyMail(createdUser[0]);
+        await verifyMail({
+            username: createdUser[0].username,
+            email: createdUser[0].email,
+            verificationCode: createdUser[0].verificationCode,
+            webToken: createdUser[0].webToken,
+            purpose: "REGISTER"
+        });
+
+
 
         // Log
         await logUserActivity(createdUser[0]._id, "REGISTER_AND_VERIFICATION_MAIL_SENT", req);
@@ -101,157 +112,117 @@ exports.verifyMail = async (req, res) => {
 
 exports.localLogin = async (req, res) => {
     try {
-
-        console.log(req);
         const { username, password } = req.body;
-        console.log(req.body, username?.toLowerCase());
+
         if (!username || !password) {
             return errorResponse(res, "All fields are required.", 400);
         }
 
         const user = await User.findOne({
             $or: [
-                { email: username?.toLowerCase() },
-                { username: username?.toLowerCase() }
+                { email: username.toLowerCase() },
+                { username: username.toLowerCase() }
             ]
         });
-        if (!user) return errorResponse(res, "User not exist.", 404);
 
-        if (!user?.isVerified) {
-            return errorResponse(res, "Please first verify your email.", 400);
+        if (!user) return errorResponse(res, "User not exist.", 404);
+        if (!user.isVerified) {
+            return errorResponse(res, "Please verify your email.", 400);
         }
 
         const isCorrect = await user.isPasswordCorrect(password);
-
         if (!isCorrect) return errorResponse(res, "Invalid credentials", 401);
 
+        const accessToken = user.generateAccessToken();
+        const refreshToken = user.generateRefreshToken();
 
-        const accessToken = await user.generateAccessToken();
-        const refreshToken = await user.generateRefreshToken();
-
-        if (!accessToken || !refreshToken) {
-            return errorResponse(res, "Something went wrong.", 402);
-        }
-
-        user.accessToken = await user.generateAccessToken();
-        user.refreshToken = await user.generateRefreshToken();
+        // ✅ ONLY refresh token DB me rakho
+        user.refreshToken = refreshToken;
         await user.save({ validateBeforeSave: false });
+
         user.password = undefined;
-        await logUserActivity(user._id, "LOGIN", req);
 
         const cookieOptions = {
             httpOnly: true,
             secure: true,
-            sameSite: "Strict",
-            // maxAge: 7*24*60*60*1000
+            //   sameSite: "strict",
         };
 
-        // set cookies
-        res.cookie("accessToken", user.accessToken, cookieOptions);
-        res.cookie("refreshToken", user.refreshToken, cookieOptions);
-        res.cookie("user", user, cookieOptions);
+        // ✅ ONLY refresh token cookie
+        res.cookie("refreshToken", refreshToken, cookieOptions);
 
-
-        return successResponse(res, "Login successfully.", {
-            user,
-            accessToken: accessToken,
-            // refreshToken: refreshToken
+        return successResponse(res, "Login successful", {
+            accessToken,
+            user
         });
 
     } catch (error) {
-        return errorResponse(res, error.message || "Login failed. Please try again.", 500);
+        return errorResponse(res, error.message, 500);
     }
 };
 
 
-// REFRESH TOKEN
 exports.refreshToken = async (req, res) => {
     try {
         const token = req.cookies.refreshToken;
+        console.log("Refresh", req.cookies, token);
         if (!token) return errorResponse(res, "No refresh token", 401);
 
         const payload = JWT.verify(token, Tokens.refreshToken);
-        const user = await User.findById(payload.id);
-        if (!user) return errorResponse(res, "User not found", 404);
+        console.log(payload);
 
-        const newAccessToken = user.generateAccessToken();
-        return successResponse(res, "Token refreshed", { accessToken: newAccessToken });
-    } catch (err) {
-        return errorResponse(res, err.message || "Token refresh failed", 401);
-    }
-}
+        const user = await User.findOne({
+            _id: payload.id,
+            refreshToken: token
+        });
 
-exports.refreshToken = async (req, res) => {
-    try {
-        const token = req.cookies.refreshToken;
-        if (!token) return errorResponse(res, "No refresh token", 401);
-
-        const payload = JWT.verify(token, Tokens.refreshToken);
-        const user = await User.findById(payload.id);
-        if (!user) return errorResponse(res, "User not found", 404);
+        console.log("1");
+        if (!user) return errorResponse(res, "Invalid refresh token", 401);
 
         const newAccessToken = user.generateAccessToken();
         const newRefreshToken = user.generateRefreshToken();
+        console.log("2");
 
-        // Set new access token cookie also (optional but recommended)
+        user.refreshToken = newRefreshToken;
+        await user.save({ validateBeforeSave: false });
+        console.log("3");
+
         const cookieOptions = {
             httpOnly: true,
             secure: true,
-            sameSite: "Strict",
-            // maxAge: 7*24*60*60*1000
         };
-        user.accessToken = newAccessToken;
-        user.refreshToken = newRefreshToken;
-        await user.save();
-        user.password = undefined;
+        console.log("4");
 
-        // set cookies
-        res.cookie("accessToken", user.accessToken, cookieOptions);
-        res.cookie("refreshToken", user.refreshToken, cookieOptions);
-        res.cookie("user", user, cookieOptions);
+        res.cookie("refreshToken", newRefreshToken, cookieOptions);
+
+        user.password = undefined;
+        console.log("5");
 
         return successResponse(res, "Token refreshed", {
             accessToken: newAccessToken,
-            user: user
+            user
         });
 
     } catch (err) {
-        return errorResponse(res, err.message, 401);
+        console.log("Error", err);
+        return errorResponse(res, "Session expired", 401);
     }
 };
 
-
 exports.logout = async (req, res) => {
     try {
-        let user = null;
-
-        // Check if middleware ne user attach kiya
-        if (req.user) {
-            user = await User.findById(req.user._id);
+        if (req.cookies?.refreshToken) {
+            await User.updateOne(
+                { refreshToken: req.cookies.refreshToken },
+                { $set: { refreshToken: null } }
+            );
         }
 
-        // Agar middleware fail ho gaya → refreshToken se user nikaalo
-        if (!user && req.cookies?.refreshToken) {
-            user = await User.findOne({ refreshToken: req.cookies.refreshToken });
-        }
-
-        // User mila to uske tokens clear karo
-        if (user) {
-            user.accessToken = null;
-            user.refreshToken = null;
-            await user.save({ validateBeforeSave: false });
-
-            await logUserActivity(user._id, "LOGOUT", req);
-        }
-
-        // Har case me cookies clear kar do
         res.clearCookie("refreshToken");
-        res.clearCookie("accessToken");
-        res.clearCookie("user");
 
-        return successResponse(res, "Logout successfully");
+        return successResponse(res, "Logout successful");
     } catch (error) {
-        return errorResponse(res, error.message || "Logout failed. Please try again.", 500);
+        return errorResponse(res, error.message, 500);
     }
 };
 
@@ -327,5 +298,85 @@ exports.updateUserProfile = async (req, res) => {
         return successResponse(res, "User profile updated successfully", user);
     } catch (error) {
         return errorResponse(res, error.message || "Failed to update user profile", 500);
+    }
+};
+
+
+
+exports.requestEmailChange = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { newEmail } = req.body;
+
+        const user = await User.findById(userId);
+        if (!user) return errorResponse(res, "User not found", 404);
+
+        // Check if email already exists
+        const emailExist = await User.findOne({ email: newEmail });
+        if (emailExist) return errorResponse(res, "Email already in use", 400);
+
+        // Generate OTP
+        const verificationCode = generateNumOTP(6);
+        const verificationExpiry = Date.now() + 5 * 60 * 1000; // 5 min
+
+
+        // Save temp email change
+        user.emailChange = {
+            newEmail,
+            verificationCode,
+            verificationExpiry,
+        };
+        await user.save();
+
+        // Send email with OTP
+        await verifyMail({
+            username: user.username,
+            email: user.emailChange.newEmail,
+            verificationCode: user.emailChange.verificationCode,
+            purpose: "EMAIL_CHANGE"
+        });
+
+
+
+        // Log
+        await logUserActivity(user._id, "EMAIL_CHANGE_REQUESTED", req);
+
+        return successResponse(res, "OTP sent to new email. Please verify.", user);
+
+    } catch (error) {
+        return errorResponse(res, error.message || "Failed to request email change", 500);
+    }
+};
+
+
+exports.verifyEmailChange = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { otp } = req.body;
+
+        const user = await User.findById(userId);
+        if (!user) return errorResponse(res, "User not found", 404);
+        if (!user.emailChange) return errorResponse(res, "No email change request found", 400);
+
+        if (Date.now() > user.emailChange.verificationExpiry) {
+            return errorResponse(res, "OTP expired", 400);
+        }
+
+        if (user.emailChange.verificationCode !== otp) {
+            return errorResponse(res, "Invalid OTP", 400);
+        }
+
+        // ✅ OTP valid, update email
+        user.email = user.emailChange.newEmail;
+        user.emailChange = undefined;
+        user.isVerified = true; // verified again
+        await user.save();
+
+        await logUserActivity(user._id, "EMAIL_CHANGED", req);
+
+        return successResponse(res, "Email updated successfully", user);
+
+    } catch (error) {
+        return errorResponse(res, error.message || "Failed to verify email change", 500);
     }
 };

@@ -5,15 +5,17 @@ import { useEffect } from 'react';
 import { FaHome } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
-import { userProfile, updateProfile, logoutUser } from '../features/authSlice';
+import { userProfile, updateProfile, logoutUser, clearOtpState, mailChangeReq } from '../features/authSlice';
 import toast from 'react-hot-toast';
 import { FaCheckCircle } from 'react-icons/fa';
 import { useState } from 'react';
+import NewVerifyMail from '../components/NewVerifyMail';
 
 const Profile = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { loading, error, profile } = useSelector((state) => state.auth);
+    const { otpSent, loading, error, profile, emailChangeSuccess } = useSelector((state) => state.auth);
+    const [showOtp, setShowOtp] = useState(false);
 
     const [formData, setFormData] = useState({ fullName: "", username: "", email: "" });
     const [oldImage, setOldImage] = useState(null); // from profile
@@ -24,12 +26,11 @@ const Profile = () => {
 
 
 
-    console.log(profile);
 
     useEffect(() => {
         document.title = "Profile - Cooking App";
         dispatch(userProfile());
-    }, [dispatch]);
+    }, [emailChangeSuccess]);
 
     useEffect(() => {
         if (profile) {
@@ -64,27 +65,24 @@ const Profile = () => {
 
 
 
-   const saveProfile = async () => {
-  try {
-    const form = new FormData();
-    form.append("fullName", formData.fullName);
-    form.append("username", formData.username);
-    form.append("email", formData.email);
-    form.append("oldImage", oldImage);
+    const saveProfile = async () => {
+        try {
+            const form = new FormData();
+            form.append("fullName", formData.fullName);
+            form.append("username", formData.username);
+            form.append("email", formData.email);
+            form.append("oldImage", oldImage);
 
-    if (newImage) {
-      form.append("profileImage", newImage);
-    }
+            if (newImage) {
+                form.append("profileImage", newImage);
+            }
 
-    await dispatch(updateProfile(form)).unwrap();
-    toast.success("Profile saved successfully!");
-  } catch (error) {
-    toast.error(error?.message || "Failed to save profile. Please try again.");
-  }
-};
-
-
-
+            await dispatch(updateProfile(form)).unwrap();
+            toast.success("Profile saved successfully!");
+        } catch (error) {
+            toast.error(error?.message || "Failed to save profile. Please try again.");
+        }
+    };
 
     const logouthandler = async () => {
         if (loading) return;
@@ -96,6 +94,25 @@ const Profile = () => {
         } catch (err) {
             toast.error(err?.message || "Logout failed.");
             navigate("/");
+        }
+    };
+    const handleNewMail = async () => {
+        const yes = confirm("Are you sure to change mail");
+
+        if (!yes) return;
+
+        try {
+            const res = await dispatch(
+                mailChangeReq({ newEmail: formData.email })
+            ).unwrap();
+
+            toast.success(res.message);
+            setTimeout(() => { setShowOtp(true); }, 2000);
+
+
+        } catch (error) {
+            console.log(error);
+            // toast.error(JSON.stringify(error) || "Failed to change mail.");
         }
     };
 
@@ -133,7 +150,7 @@ const Profile = () => {
                                 accept="image/*"
                                 id="profileImageInput"
                                 className="hidden"
-                                onChange={(e) => {setNewImage(e.target.files[0]); }}
+                                onChange={(e) => { setNewImage(e.target.files[0]); }}
                             />
 
                             {/* Trigger File Picker */}
@@ -204,6 +221,7 @@ const Profile = () => {
                         {/* Show verify button if email changed */}
                         {verifyActive && (
                             <button
+                                onClick={handleNewMail}
                                 type="button"
                                 className="py-1 px-3 bg-red-500 hover:bg-red-600 text-white rounded mt-2 cursor-pointer"
                             >
@@ -271,6 +289,21 @@ const Profile = () => {
                     Delete Account
                 </button>
             </div>
+
+
+
+
+            {showOtp && (
+                <NewVerifyMail
+                    onSuccess={() => {dispatch(clearOtpState());}}
+                    onClose={() => setShowOtp(false)}
+
+                />
+            )}
+
+
+
+
         </section >
     );
 };

@@ -77,9 +77,6 @@ router.route("/get-auditlog").get(authenticated,getAuditLog);
 
 
 
-
-
-
-
-
 module.exports = router;
+
+ 

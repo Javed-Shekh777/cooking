@@ -1,21 +1,26 @@
 const upload = require("../config/multerconfig");
-const {  localRegister, verifyMail, localLogin, logout, contact, getUserProfile, updateUserProfile,refreshToken } = require("../controllers/userController");
+const {  localRegister, verifyMail, localLogin, logout, contact, getUserProfile, updateUserProfile,refreshToken,requestEmailChange,verifyEmailChange } = require("../controllers/userController");
 const authenticated = require("../middlewares/authMiddleware");
 
-const route = require("express").Router();
+const router = require("express").Router();
 
-route.route("/localregister").post(localRegister);
-route.route("/locallogin").post(localLogin);
-route.route("/refresh").post(refreshToken);
-route.route("/logout").post(logout);
-route.route("/verify-mail").post(verifyMail);
-route.route("/contact").post(contact);
+router.route("/localregister").post(localRegister);
+router.route("/locallogin").post(localLogin);
+router.route("/refresh").post(refreshToken);
+router.route("/logout").post(logout);
+router.route("/verify-mail").post(verifyMail);
+router.route("/contact").post(contact);
 
-route.route("/user-profile").get(authenticated,getUserProfile);
-route.route("/update-profile").post(authenticated,upload.single("profileImage"),updateUserProfile);
-
-
-
+ 
+router.route("/request-email-change").post(authenticated,requestEmailChange);
+router.route("/verify-email-change").post(authenticated,verifyEmailChange);
 
 
-module.exports = route;
+router.route("/user-profile").get(authenticated,getUserProfile);
+router.route("/update-profile").post(authenticated,upload.single("profileImage"),updateUserProfile);
+
+
+
+
+
+module.exports = router;

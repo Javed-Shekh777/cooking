@@ -18,6 +18,7 @@ import { useState } from 'react';
 import ShareOptions from '../components/ShareOptions';
 import CommentsSection from '../components/CommentSection';
 import { FRONTEND_URL } from '../constans';
+import { IsUserLikedRecipe } from '../services/features';
 
 const RecipeDetails = () => {
     const { categoryId, recipeId } = useParams();
@@ -55,8 +56,9 @@ const RecipeDetails = () => {
     // Sync liked/saved with backend
     useEffect(() => {
         if (recipeMeta) {
-            setLiked(recipeMeta.isLiked);
-            setSaved(recipeMeta.isSaved);
+            console.log("fdf dsfdsfyusf sdfsyf sdyf dsofy dsfosd fosyyfsdofsfsdf\nfuds fsu fgsf sd")
+            setLiked(IsUserLikedRecipe(recipe, user?._id).isLiked);
+            setSaved(IsUserLikedRecipe(recipe, user?._id).isSaved);
         }
     }, [recipeMeta]);
 
@@ -134,7 +136,9 @@ const RecipeDetails = () => {
         setLiked(prev => !prev);
         try {
             const res = await dispatch(recipeLikeDish(recipeId)).unwrap();
-            setLiked(res.liked);
+            if (res?.success) {
+                setLiked(res.data?.isLiked);
+            }
         } catch (err) {
             console.log(err);
         }
@@ -146,7 +150,9 @@ const RecipeDetails = () => {
         setSaved(prev => !prev);
         try {
             const res = await dispatch(recipeSave(recipeId)).unwrap();
-            setSaved(res.saved);
+             if (res?.success) {
+                setSaved(res.data?.isSaved);
+            }
         } catch (err) {
             console.log(err);
         }
@@ -323,22 +329,22 @@ const RecipeDetails = () => {
                                 <button
                                     onClick={handleLike}
                                     className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition
-    ${recipeMeta?.isLiked ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-600"}
+    ${liked ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-600"}
     hover:bg-red-200`}
                                 >
-                                    <FaHeart className={`${recipeMeta?.isLiked ? "text-red-500" : "text-gray-800"}`} />
-                                    <span>{recipeMeta?.isLiked ? "Liked" : "Like"} ({recipeMeta?.likesCount || 0})</span>
+                                    <FaHeart className={`${liked ? "text-red-500" : "text-gray-800"}`} />
+                                    <span>{liked ? "Liked" : "Like"} ({recipeMeta?.likesCount || 0})</span>
                                 </button>
 
                                 {/* Save Button */}
                                 <button
                                     onClick={handleSave}
                                     className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition
-    ${recipeMeta?.isSaved ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600"}
+    ${saved ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600"}
     hover:bg-blue-200`}
                                 >
-                                    <FaBookmark className={`${recipeMeta?.isSaved ? "text-blue-600" : "text-gray-800"}`} />
-                                    <span>{recipeMeta?.isSaved ? "Saved" : "Save"} ({recipeMeta?.savesCount || 0})</span>
+                                    <FaBookmark className={`${saved ? "text-blue-600" : "text-gray-800"}`} />
+                                    <span>{saved ? "Saved" : "Save"} ({recipeMeta?.savesCount || 0})</span>
                                 </button>
 
                             </div>

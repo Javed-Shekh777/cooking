@@ -25,3 +25,15 @@ export const timeAgo = (dateString) => {
     }
     return Math.floor(seconds) + "s ago"; // Seconds ago
 };
+
+
+export const IsUserLikedRecipe = (recipe, userId) => {
+
+    const likedUserIds = recipe?.likes?.map(id => id.toString()) || [];
+    const savedUserIds = recipe?.saves?.map(id => id.toString()) || [];
+
+    const isLiked = likedUserIds.includes(userId?.toString())||false;
+    const isSaved = savedUserIds.includes(userId?.toString())||false;
+
+    return { isLiked, isSaved};
+}

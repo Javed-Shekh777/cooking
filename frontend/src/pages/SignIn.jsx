@@ -15,7 +15,7 @@ const SignUp = () => {
     const [formData, setFormData] = useState({ username: "", password: "" });
     const [formError, setFormError] = useState({ field: "", value: "" });
     const dispatch = useDispatch();
-    const { error, loading, user } = useSelector((state) => state.auth);
+    const { error, loading,user,authChecked  } = useSelector((state) => state.auth);
 
 
     useEffect(() => {

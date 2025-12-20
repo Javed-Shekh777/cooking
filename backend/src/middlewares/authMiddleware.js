@@ -21,8 +21,6 @@ const authenticated = async (req, res, next) => {
             return errorResponse(res, "Token not found.", 401);
         }
 
-        console.log("Token",req.cookies?.accessToken);
-        console.log(req.headers.authorization);
 
 
         // Verify JWT

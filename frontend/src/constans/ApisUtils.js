@@ -8,6 +8,10 @@ export const authApis = {
     contact: "/auth/contact",
     userProfile: "/auth/user-profile",
     updateProfile: "/auth/update-profile",
+    refreshToken: "/auth/refresh",
+
+    mailChangeReq: "/auth/request-email-change",
+    mailChange: "/auth/verify-email-change",
 };
 
 export const recipeApis = {
@@ -33,7 +37,7 @@ export const recipeApis = {
     recipeView: "/recipe/recipe-view",
     recipeSave: "/recipe/recipe-save",
     submitRecipeRating: "/recipe/recipe-rating",
-    
+
 
 
 
@@ -48,8 +52,8 @@ export const adminApis = {
     // New 
 
     getDeleteReq: "/recipe/get-delete-req",
-    updateDeleteReq:"/recipe/update-delete-req",
-    auditLog:"/recipe/get-auditlog"
+    updateDeleteReq: "/recipe/update-delete-req",
+    auditLog: "/recipe/get-auditlog"
 };
 export const chefApis = {
     chefDashboard: "/chef/dashboard",

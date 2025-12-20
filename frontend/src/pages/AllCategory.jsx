@@ -5,11 +5,6 @@ import { useEffect } from "react";
 import { getCategories } from "../features/recipeSlice";
 import MailBox from "../components/MailBox";
 
-
-
-
-
-
 const AllCategories = () => {
     const dispatch = useDispatch();
     const { error, loading, categories } = useSelector((state) => state.recipe);

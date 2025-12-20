@@ -586,7 +586,7 @@ exports.updateCategory = async (req, res) => {
       return errorResponse(res, "This category name is already in use by another category.", 400);
     }
 
-    const category = await RecipeCategorySchema.findOne({ _id: id, isActive: true, isDeleted: false });
+    const category = await RecipeCategorySchema.findOne({ _id: id, isActive: true  });
     if (!category) {
       return errorResponse(res, "Category not found.", 404);
     }
@@ -809,7 +809,7 @@ exports.getRecipe = async (req, res) => {
     }
 
     const userId = req.user?._id;
-    const recipe = await Recipe.findOne({ _id: id, isDeleted: false }).populate({
+    const recipe = await Recipe.findOne({ _id: id}).populate({
       path: "author",
       select: "profilePic username email"
     });
@@ -819,20 +819,11 @@ exports.getRecipe = async (req, res) => {
     }
     const likeMeta = await RecipeLikeShareModel.findOne({ recipeId: id });
 
-    const likedUserIds = likeMeta?.likes.map(id => id.toString()) || [];
-    const savedUserIds = likeMeta?.saves.map(id => id.toString()) || [];
-
-    const isLiked = likedUserIds.includes(userId?.toString());
-    const isSaved = savedUserIds.includes(userId?.toString());
-
-
-
+   
 
     return successResponse(res, "Recipe found", {
       recipe,
       meta: {
-        isLiked: isLiked,
-        isSaved: isSaved,
         likesCount: likeMeta?.likes.length || 0,
         savesCount: likeMeta?.saves.length || 0,
         viewsCount: likeMeta?.views.length || 0,
@@ -854,7 +845,7 @@ exports.getCategory = async (req, res) => {
       return errorResponse(res, "Category ID is required.", 400);
     }
 
-    const category = await RecipeCategorySchema.findOne({ _id: id, isDeleted: false });
+    const category = await RecipeCategorySchema.findOne({ _id: id });
 
     if (!category) {
       return errorResponse(res, "Category not found.", 404);
@@ -997,7 +988,7 @@ exports.deleteComment = async (req, res) => {
         return errorResponse(res, "Comment not found.", 404);
       }
 
-      const recipe = await Recipe.findOne({ _id: deletedComment.recipeId, isDeleted: false });
+      const recipe = await Recipe.findOne({ _id: deletedComment.recipeId});
       if (recipe.commentsCount > 0) {
         recipe.commentsCount = recipe.commentsCount - 1;
       }
@@ -1091,7 +1082,7 @@ exports.recipeLike = async (req, res) => {
     const { recipeId } = req.body;
     const userId = req.user._id;
 
-    const recipe = await Recipe.findOne({ _id: recipeId, isDeleted: false });
+    const recipe = await Recipe.findOne({ _id: recipeId});
     if (!recipe) return errorResponse(res, "Recipe not found.", 400);
 
     let isLiked = false;
@@ -1147,7 +1138,7 @@ exports.recipeSave = async (req, res) => {
     const { recipeId } = req.body;
     const userId = req.user._id;
 
-    const recipe = await Recipe.findOne({ _id: recipeId, isDeleted: false });
+    const recipe = await Recipe.findOne({ _id: recipeId});
 
     if (!recipe) return errorResponse(res, "Recipe not found.", 400);
 
@@ -1203,7 +1194,7 @@ exports.submitRecipeRating = async (req, res) => {
     console.log(userId);
 
 
-    const recipe = await Recipe.findOne({ _id: recipeId, isDeleted: false });
+    const recipe = await Recipe.findOne({ _id: recipeId });
 
     console.log(recipe);
 

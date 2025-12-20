@@ -9,25 +9,25 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['superadmin', 'admin', 'chef', 'moderator', 'user'],
         default: 'user',
-        required:[true,"Role is required."]
+        required: [true, "Role is required."]
     },
     email: {
         type: String,
         required: [true, "Email is required"],
         unique: true,
-        lowercase:true,
-        trim:true
+        lowercase: true,
+        trim: true
     },
     fullName: {
         type: String,
         required: [true, "Fullname is required"],
-        trim:true
+        trim: true
     },
     username: {
         type: String,
         required: [true, "Username is required"],
-        lowercase:true,
-        trim:true
+        lowercase: true,
+        trim: true
     },
     mobile: {
         type: String,
@@ -50,13 +50,19 @@ const userSchema = new mongoose.Schema({
     providerId: {
         type: String // unique ID from social provider
     },
-    webToken:{type:String},
+    webToken: { type: String },
     accessToken: { type: String },
     refreshToken: { type: String },
     isVerified: { type: Boolean, default: false },
     verificationCode: { type: String },
     verificationExpiry: { type: Date },
-    
+
+    emailChange: {
+        newEmail: { type: String },        // new email waiting verification
+        verificationCode: { type: String },
+        verificationExpiry: { type: Date },
+    },
+
 }, { timestamps: true });
 
 

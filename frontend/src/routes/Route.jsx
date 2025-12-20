@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import App from '../App';
 import Contact from "../pages/Contact";
-import Index from "../layout/MainLayout";
+import MainLayout from "../layout/MainLayout";
 import Home from "../pages/Home";
 import BlogAndArticle from "../pages/BlogAndArticle";
 import BlogPost from "../pages/BlogPost";
@@ -27,65 +27,138 @@ import AdminLayout from "../pages/admin/AdminLayout";
 import AdminRecipes from "../pages/admin/AdminRecipes";
 import AdminDeleteRequests from "../pages/admin/AdminDeleteRequests";
 import AuditLogs from "../pages/admin/AuditLogs";
+import AuthGuard from "../components/AuthGuard";
+import RoleGuard from "../components/RoleGuard";
+
+
+// const router = createBrowserRouter([
+//     {
+//         path: "/",
+//         element: <App />,
+//         children: [
+//             {
+//                 path: "",
+//                 element: <Index />,
+//                 children: [
+//                     { path: "", element: <Home /> },
+//                     { path: "contact", element: <Contact /> },
+//                     { path: "blog", element: <BlogAndArticle /> },
+//                     { path: "recipie/:id", element: <RecipeDetails /> },
+//                     { path: "recipes", element: <Recipes /> },
+//                     { path: "blog/:id", element: <BlogPost /> },
+//                     { path: "all-category", element: <AllCategories /> },
+//                     { path: "category/:categoryId", element: <CategoryRecipe /> },
+//                     { path: "category/:categoryId/recipe/:recipeId", element: <RecipeDetails /> },
+//                     { path: "profile", element: <Profile /> },
+//                     { path: "favourites", element: <Favorites /> },
+//                     { path: "about", element: <About /> },
+//                 ],
+//             },
+//             { path: "sign-in", element: <SignIn /> },
+//             { path: "sign-up", element: <SignUp /> },
+//             { path: "verify-mail", element: <VerifyAccountOTP /> },
+//             { path: "verify-account", element: <EmailVerifiedPage /> },
+//             { path: "verify", element: <VerifyHandler /> },
+//             {
+//                 path: "chef",
+//                 element: <ChefLayout />,
+//                 children: [
+//                     { index: true, element: <Chef /> }, // 👈 fix here
+//                     { path: "recipe/add", element: <AddReceipie mode="add" /> },
+//                     { path: "recipe/edit/:id", element: <AddReceipie mode="edit" /> },
+//                     { path: "all-recipes", element: <AllRecipes /> },
+//                     { path: "all-category", element: <AllCategory /> },
+//                     { path: "setting", element: <Setting /> },
+//                 ]
+//             },
+//             {
+//                 path: "admin",
+//                 element: <AdminLayout />,
+//                 children: [
+//                     { path: "recipes", element: <AdminRecipes /> },
+//                     { path: "delreq", element: <AdminDeleteRequests /> },
+//                     { path: "auditlog", element: <AuditLogs /> }
+//                 ]
+//             }
+//         ]
+//     }
+// ]);
 
 
 const router = createBrowserRouter([
-    {
-        path: "/",
-        element: <App />,
+  {
+    path: "/",
+    element: <App />,
+    children: [
+      // ---------- PUBLIC ----------
+      {
+        path: "",
+        element: <MainLayout />,
         children: [
-            {
-                path: "",
-                element: <Index />,
-                children: [
-                    { path: "", element: <Home /> },
-                    { path: "contact", element: <Contact /> },
-                    { path: "blog", element: <BlogAndArticle /> },
-                    { path: "recipie/:id", element: <RecipeDetails /> },
-                    { path: "recipes", element: <Recipes /> },
-                    { path: "blog/:id", element: <BlogPost /> },
-                    { path: "all-category", element: <AllCategories /> },
-                    { path: "category/:categoryId", element: <CategoryRecipe /> },
-                    { path: "category/:categoryId/recipe/:recipeId", element: <RecipeDetails /> },
-                    { path: "profile", element: <Profile /> },
-                    { path: "favourites", element: <Favorites /> },
-                    { path: "about", element: <About /> },
+          { index: true, element: <Home /> },
+          { path: "contact", element: <Contact /> },
+          { path: "blog", element: <BlogAndArticle /> },
+          { path: "blog/:id", element: <BlogPost /> },
+          { path: "recipes", element: <Recipes /> },
+          { path: "recipie/:id", element: <RecipeDetails /> },
+          { path: "all-category", element: <AllCategories /> },
+          { path: "category/:categoryId", element: <CategoryRecipe /> },
+          { path: "category/:categoryId/recipe/:recipeId", element: <RecipeDetails /> },
+          { path: "about", element: <About /> },
+        ],
+      },
 
+      { path: "sign-in", element: <SignIn /> },
+      { path: "sign-up", element: <SignUp /> },
+      { path: "verify-mail", element: <VerifyAccountOTP /> },
+      { path: "verify-account", element: <EmailVerifiedPage /> },
+      { path: "verify", element: <VerifyHandler /> },
 
+      // ---------- AUTH REQUIRED ----------
+      {
+        element: <AuthGuard />,
+        children: [
+          { path: "profile", element: <Profile /> },
+          { path: "favourites", element: <Favorites /> },
 
-                ],
-            },
-            { path: "sign-in", element: <SignIn /> },
-            { path: "sign-up", element: <SignUp /> },
-            { path: "verify-mail", element: <VerifyAccountOTP /> },
-            { path: "verify-account", element: <EmailVerifiedPage /> },
-            { path: "verify", element: <VerifyHandler /> },
-            {
+          // ---------- CHEF ----------
+          {
+            element: <RoleGuard allowedRoles={["chef"]} />,
+            children: [
+              {
                 path: "chef",
                 element: <ChefLayout />,
                 children: [
-                    { index: true, element: <Chef /> }, // 👈 fix here
-                    { path: "recipe/add", element: <AddReceipie mode="add" /> },
-                    { path: "recipe/edit/:id", element: <AddReceipie mode="edit" /> },
-                    { path: "all-recipes", element: <AllRecipes /> },
-                    { path: "all-category", element: <AllCategory /> },
-                    { path: "setting", element: <Setting /> },
+                  { index: true, element: <Chef /> },
+                  { path: "recipe/add", element: <AddReceipie mode="add" /> },
+                  { path: "recipe/edit/:id", element: <AddReceipie mode="edit" /> },
+                  { path: "all-recipes", element: <AllRecipes /> },
+                  { path: "all-category", element: <AllCategory /> },
+                  { path: "setting", element: <Setting /> },
+                ],
+              },
+            ],
+          },
 
-
-
-                ]
-            },
-            {path:"admin",
-                element:<AdminLayout />,
-                children:[
-                    {path:"recipes",element:<AdminRecipes />},
-                    {path:"delreq",element:<AdminDeleteRequests />},
-                    {path:"auditlog",element:<AuditLogs/>}
-
-                ]
-            }
-        ]
-    }
+          // ---------- ADMIN ----------
+          {
+            element: <RoleGuard allowedRoles={["chef"]} />,
+            children: [
+              {
+                path: "admin",
+                element: <AdminLayout />,
+                children: [
+                  { path: "recipes", element: <AdminRecipes /> },
+                  { path: "delreq", element: <AdminDeleteRequests /> },
+                  { path: "auditlog", element: <AuditLogs /> },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
 ]);
 
 

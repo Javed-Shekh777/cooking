@@ -21,8 +21,6 @@ const initialState = {
     recipeCategory: [],
     recipe: {},
     recipeMeta: {
-        isLiked: false,
-        isSaved: false,
         likesCount: 0,
         savesCount: 0,
         viewsCount: 0,
@@ -711,7 +709,8 @@ const recipeSlice = createSlice({
                 state.loading = false;
 
                 if (action.payload?.success) {
-                    state.recipeMeta.isLiked = action.payload.data.isLiked;
+                    console.log("Lkkedd");
+                    // state.recipe = action.payload.data.
                     state.recipeMeta.likesCount = action.payload.data.likesCount;
                 }
             })
