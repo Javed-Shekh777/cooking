@@ -7,6 +7,7 @@ exports.recipeVisibilityPolicy = ({ user, query }) => {
     return filter;
   }
 
+  console.log(user,query);
   // 👨‍🍳 Chef
   if (user.role === "chef") {
     filter.author = user.id;

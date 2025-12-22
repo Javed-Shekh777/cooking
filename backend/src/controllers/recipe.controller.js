@@ -488,8 +488,8 @@ exports.deleteRecipe = async (req, res, next) => {
     session.endSession();
 
     return successResponse(res, "Recipe soft deleted successfully", {
-      reqId:request?._id,
-      status:request.status
+      reqId: request?._id,
+      status: request.status
     });
 
   } catch (error) {
@@ -574,7 +574,7 @@ exports.permanentDeleteRecipe = async (req, res, next) => {
     }
 
     return successResponse(res, "Recipe permanently deleted successfully");
-  } catch (err) {
+  } catch (error) {
     await session.abortTransaction();
     next(error);
 
@@ -699,6 +699,8 @@ exports.getRecipes = async (req, res, next) => {
       user: req.user,
       query: req.query
     });
+
+    console.log("fndjf b")
 
     if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
       filter.categoryId = categoryId;
@@ -944,13 +946,15 @@ exports.submitRecipeRating = async (req, res, next) => {
 exports.getLast7DaysStats = async (req, res, next) => {
   try {
     const user = req.user;
-    const isChef = user.role === "chef";
+    const isChef = user.role === "CHEF";
 
     const matchStage = {
       createdAt: {
         $gte: new Date(new Date().setDate(new Date().getDate() - 6))
       }
     };
+
+    console.log(matchStage);
 
     // Chef → sirf apni recipes
     if (isChef) {
@@ -960,17 +964,24 @@ exports.getLast7DaysStats = async (req, res, next) => {
     const stats = await Recipe.aggregate([
       { $match: matchStage },
       {
-        $group: {
-          _id: {
-            day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
-          },
-          recipes: { $sum: 1 },
-          views: { $sum: { $size: { $ifNull: ["$views", []] } } },
-          likes: { $sum: { $size: { $ifNull: ["$likes", []] } } }
+        $project: {
+          viewsCount: { $size: { $ifNull: ["$views", []] } },
+          likesCount: { $size: { $ifNull: ["$likes", []] } },
+          day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+
         }
       },
-      { $sort: { "_id.day": 1 } }
+      {
+        $group: {
+          _id: "$day",
+          recipes: { $sum: 1 },
+          views: { $sum: "$viewsCount" },
+          likes: { $sum: "$likesCount" }
+        }
+      },
+      { $sort: { _id: 1 } }
     ]);
+
 
     return successResponse(res, "Last 7 days stats", stats);
 

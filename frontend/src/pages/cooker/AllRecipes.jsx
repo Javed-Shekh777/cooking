@@ -113,7 +113,7 @@ const AllRecipes = () => {
 
 
     useEffect(() => {
-        dispatch(getRecipes());
+        dispatch(getRecipes({}));
     }, [dispatch]);
 
 

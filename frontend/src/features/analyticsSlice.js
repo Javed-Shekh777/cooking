@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import api from "../utils/axios";
-import { chefApis } from "../constans/ApisUtils";
+import { chefApis, recipeApis } from "../constans/ApisUtils";
 
 const initialState = {
     loading: false,
@@ -25,7 +25,8 @@ const initialState = {
     },
     topRecipes: [],
     error: null,
-    allRequests: []
+    allRequests: [],
+    chart: null
 }
 
 export const getDashboard = createAsyncThunk("analytics/getDashboard", async (_, { rejectWithValue }) => {
@@ -40,6 +41,22 @@ export const getDashboard = createAsyncThunk("analytics/getDashboard", async (_,
 });
 
 
+export const getChart = createAsyncThunk("analytics/getChart", async (_, { rejectWithValue }) => {
+    try {
+        const res = await api.get(recipeApis.chart);
+        console.log("response:",res.data);
+        return { data: res.data.data, message: res.data.message };
+
+    } catch (error) {
+        console.log("error:",error);
+
+        const backendMessage = error?.response?.data?.message || err.message || "Failed to load";
+        return rejectWithValue({ message: backendMessage, data: error?.response?.data });
+    }
+});
+
+
+
 
 
 
@@ -51,19 +68,34 @@ const analyticSlice = createSlice({
 
     },
     extraReducers: (builder) => {
-        builder.addCase(getDashboard.pending, (state, action) => {
-            state.loading = true;
-        })
+        builder
+            .addCase(getDashboard.pending, (state, action) => {
+                state.loading = true;
+            })
             .addCase(getDashboard.fulfilled, (state, action) => {
                 console.log(action.payload.data);
                 state.deleteRequests = action.payload.data?.deleteRequests;
                 state.recipes = action.payload.data?.recipes;
                 state.loading = false;
                 state.error = null;
-
-
             })
             .addCase(getDashboard.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload.message;
+            })
+
+
+
+             .addCase(getChart.pending, (state, action) => {
+                state.loading = true;
+            })
+            .addCase(getChart.fulfilled, (state, action) => {
+                console.log(action.payload.data);
+                state.chart = action.payload.data;
+                state.loading = false;
+                state.error = null;
+            })
+            .addCase(getChart.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload.message;
             })

@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { dashboard } from "../../features/recipeSlice";
-import { getDashboard } from "../../features/analyticsSlice";
+import { getChart, getDashboard } from "../../features/analyticsSlice";
 
 
 
@@ -13,17 +13,18 @@ import { getDashboard } from "../../features/analyticsSlice";
 const Chef = () => {
     const dispatch = useDispatch();
     const { dashboardData, error } = useSelector((state) => state.recipe);
-    const {deleteRequests,recipes} = useSelector((state) => state.analytics);
+    const { deleteRequests, recipes, chart } = useSelector((state) => state.analytics);
     console.log(dashboardData);
+    console.log("cahrt", chart);
 
     const fetchDashboard = async () => {
         try {
-            const res = await dispatch(getDashboard()).unwrap();
-            console.log("Response DD:", res);
+            await dispatch(getDashboard()).unwrap();
+            await dispatch(getChart()).unwrap();
+
         } catch (error) {
 
             toast.error(error?.message || "Something went wrong");
-
         }
     }
     useEffect(() => {
@@ -110,8 +111,10 @@ const Chef = () => {
                             <p className="p-1.5 rounded-full bg-white shadow text-black flex items-center justify-center"><FcShare size={20} /></p>
                         </div>
                     </a>
-
                 </li>
+                
+
+
 
                 <li className={`box rounded-2xl hover:scale-98 transition-all duration-300 p-5 hover:shadow flex flex-col sm:items-start items-center bg-gradient-to-r from-orange-400 via-sky-500 to-blue-600`}>
                     <a href='#'>
@@ -126,9 +129,49 @@ const Chef = () => {
                 {/* ))} */}
 
             </ul>
+
+
+            <div className="flex flex-col gap-6">
+                {/* <SummaryCards chart={chart} /> */}
+                <DashboardChart chart={chart} />
+            </div>
+
+
         </section>
 
     )
 }
 
 export default Chef
+
+
+import {
+    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from "recharts";
+
+const DashboardChart = ({ chart }) => {
+    const data = chart?.map(s => ({
+        day: s._id.day,
+        recipes: s.recipes,
+        views: s.views,
+        likes: s.likes
+    }));
+
+    return (
+        <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Last 7 Days Activity</h2>
+            <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={data}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="day" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="recipes" stroke="#3b82f6" name="Recipes" />
+                    <Line type="monotone" dataKey="views" stroke="#10b981" name="Views" />
+                    <Line type="monotone" dataKey="likes" stroke="#ef4444" name="Likes" />
+                </LineChart>
+            </ResponsiveContainer>
+        </div>
+    );
+};

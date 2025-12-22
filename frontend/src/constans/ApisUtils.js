@@ -34,6 +34,8 @@ export const recipeApis = {
     recipeView: "/recipes/recipe-view",
     recipeSave: "/recipes/recipe-save",
     submitRecipeRating: "/recipes/recipe-rating",
+    chart:"/recipes/charts/last-7-days"
+
 };
 
 
