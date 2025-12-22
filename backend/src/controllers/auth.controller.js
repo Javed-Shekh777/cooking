@@ -95,7 +95,7 @@ exports.localRegister = async (req, res, next) => {
 };
 
 
-exports.verifyMail = async (req, res,next) => {
+exports.verifyMail = async (req, res, next) => {
     try {
         const { email, token } = req.body;
         if (!email || !token) {
@@ -162,7 +162,7 @@ exports.verifyMail = async (req, res,next) => {
 };
 
 
-exports.localLogin = async (req, res,next) => {
+exports.localLogin = async (req, res, next) => {
     try {
         const { username, password } = req.body;
 
@@ -222,7 +222,7 @@ exports.localLogin = async (req, res,next) => {
         const cookieOptions = {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "strict"
+            // sameSite: "strict"
         };
 
         // ✅ ONLY refresh token cookie
@@ -242,7 +242,7 @@ exports.localLogin = async (req, res,next) => {
 };
 
 
-exports.refreshToken = async (req, res,next) => {
+exports.refreshToken = async (req, res, next) => {
     try {
         const token = req.cookies.refreshToken;
         if (!token) return errorResponse(res, "No refresh token", 401);
@@ -271,7 +271,7 @@ exports.refreshToken = async (req, res,next) => {
         const cookieOptions = {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "strict"
+            // sameSite: "strict"
         };
 
         // ✅ ONLY refresh token cookie
@@ -293,11 +293,11 @@ exports.refreshToken = async (req, res,next) => {
     }
 };
 
-exports.logout = async (req, res,next) => {
+exports.logout = async (req, res, next) => {
     try {
-        let user= null;
+        let user = null;
         if (req.cookies?.refreshToken) {
-           user  =  await User.updateOne(
+            user = await User.updateOne(
                 { refreshToken: req.cookies.refreshToken },
                 { $set: { refreshToken: null } }
             );
@@ -315,7 +315,8 @@ exports.logout = async (req, res,next) => {
 
         res.clearCookie("refreshToken", {
             httpOnly: true,
-            secure: true,
+            secure: process.env.NODE_ENV === "production",
+
             // sameSite: "strict",
         });
 
@@ -329,7 +330,7 @@ exports.logout = async (req, res,next) => {
 };
 
 
-exports.requestEmailChange = async (req, res,next) => {
+exports.requestEmailChange = async (req, res, next) => {
     try {
         const userId = req.user._id;
         const { newEmail } = req.body;
@@ -376,7 +377,7 @@ exports.requestEmailChange = async (req, res,next) => {
     }
 };
 
-exports.verifyEmailChange = async (req, res,next) => {
+exports.verifyEmailChange = async (req, res, next) => {
     try {
         const userId = req.user._id;
         const { otp } = req.body;
