@@ -1,50 +1,24 @@
-const { Tokens } = require("../constants");
 const JWT = require("jsonwebtoken");
 const User = require("../models/user.model");
 
-const optionalAuthenticated = async (req, res, next) => {
-    try {
-        let token;
+exports.optionalAuth = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
 
-        // Header token
-        if (req.headers.authorization?.startsWith("Bearer ")) {
-            token = req.headers.authorization.split(" ")[1];
-        } 
-        // Cookie token
-        else if (req.cookies?.accessToken) {
-            token = req.cookies.accessToken;
-        }
+  if (!authHeader?.startsWith("Bearer ")) {
+    req.user = null; // 👈 public user
+    return next();
+  }
 
-        if (!token) {
-            req.user = undefined; // स्पष्ट रूप से सेट करें कि कोई उपयोगकर्ता नहीं है
-            return next(); // बस आगे बढ़ें
-        }
+  try {
+    const token = authHeader.split(" ")[1];
+    const decoded = JWT.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
-        // Verify JWT
-        let decoded;
-        try {
-            decoded = JWT.verify(token, Tokens.acessToken);
-        } catch (err) {
-            // टोकन अमान्य है, लेकिन फिर भी आगे बढ़ें
-            req.user = undefined;
-            return next(); 
-        }
+    const user = await User.findById(decoded.id).select("_id role");
+    req.user = user || null;
 
-        // Fetch user from DB
-        const user = await User.findById(decoded.id).select("-password");
-        if (user) {
-             req.user = user; // उपयोगकर्ता मिल गया
-        } else {
-             req.user = undefined; // उपयोगकर्ता नहीं मिला
-        }
-       
-        next(); // अनुरोध को पास करें
-
-    } catch (error) {
-        // यदि बीच में कोई और त्रुटि आती है, तो भी अनुरोध को जाने दें
-        req.user = undefined; 
-        next();
-    }
+    next();
+  } catch (err) {
+    req.user = null; // 👈 invalid token → treat as public
+    next();
+  }
 };
-
-module.exports = optionalAuthenticated;

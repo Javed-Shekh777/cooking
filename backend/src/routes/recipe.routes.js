@@ -19,6 +19,7 @@ const {
   getLast7DaysStats
 } = require("../controllers/recipe.controller");
 const authenticated = require("../middlewares/auth.middleware");
+const { optionalAuth } = require("../middlewares/optionalAuthenticated");
 const allowRoles = require("../middlewares/role.middleware");
 
 // Chef/Admin Routes
@@ -77,7 +78,7 @@ router.delete(
 
 // Public Routes
 router.get("/get-recipe/:id", getRecipe);
-router.get("/get-recipes", getRecipes);
+router.get("/get-recipes",optionalAuth, getRecipes);
 router.get("/get-recommendrecipes", getRecommendedRecipes);
 router.get("/suggest-tags", authenticated, suggestTags);
 

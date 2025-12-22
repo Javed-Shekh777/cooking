@@ -11,6 +11,7 @@ const RecipeCategory = require("../models/category.model");
 const mongoose = require("mongoose");
 const { generateSlug } = require("../helper/generateOTP");
 const { startSession, permanentlyDeleteRecipeInternal } = require("../helper/common");
+const { recipeVisibilityPolicy } = require("../helper/recipeVisibilityPolicy");
 
 
 exports.addRecipe = async (req, res, next) => {
@@ -658,33 +659,56 @@ exports.getRecommendedRecipes = async (req, res, next) => {
 };
 
 
+// exports.getRecipes = async (req, res, next) => {
+//   try {
+//     const { categoryId, isPublished } = req.query;
+//     console.log(req.query);
+
+//     let filter = { isDeleted: false }; // soft-deleted recipes ignore
+
+//     if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
+//       filter.categoryId = categoryId;
+//     }
+
+//     if (isPublished !== undefined) {
+//       filter.isPublished = isPublished === "true"; // query param se bool conversion
+//     }
+
+//     const recipes = await Recipe.find(filter).lean();
+//     // .select("title dishImage isPublished categoryId tags prepTime cookTime difficultyLevel")
+
+//     console.log(recipes, categoryId);
+//     if (!recipes.length) {
+//       return successResponse(res, "No recipes found.", []);
+//     }
+//     return successResponse(res, "Recipes fetched successfully.", recipes);
+//   } catch (error) {
+//     next(error);
+
+//     // return errorResponse(res, error.message || "Failed to fetch recipes.", 500);
+//   }
+// };
+
+
+
 exports.getRecipes = async (req, res, next) => {
   try {
-    const { categoryId, isPublished } = req.query;
-    console.log(req.query);
+    const { categoryId } = req.query;
 
-    let filter = { isDeleted: false }; // soft-deleted recipes ignore
+    let filter = recipeVisibilityPolicy({
+      user: req.user,
+      query: req.query
+    });
 
     if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
       filter.categoryId = categoryId;
     }
 
-    if (isPublished !== undefined) {
-      filter.isPublished = isPublished === "true"; // query param se bool conversion
-    }
-
     const recipes = await Recipe.find(filter).lean();
-    // .select("title dishImage isPublished categoryId tags prepTime cookTime difficultyLevel")
+    return successResponse(res, "Recipes fetched", recipes);
 
-    console.log(recipes, categoryId);
-    if (!recipes.length) {
-      return successResponse(res, "No recipes found.", []);
-    }
-    return successResponse(res, "Recipes fetched successfully.", recipes);
-  } catch (error) {
-    next(error);
-
-    // return errorResponse(res, error.message || "Failed to fetch recipes.", 500);
+  } catch (err) {
+    next(err);
   }
 };
 
