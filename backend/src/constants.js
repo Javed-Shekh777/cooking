@@ -9,9 +9,10 @@ const SchemaName = {
     replpy: "Reply",
     recipeComment: "RecipeComment",
     deleteRequest: "DeleteRequest",
-    auditLog:"auditLog"
+    auditLog: "auditLog"
+};
 
-}
+const ROLES = ["SUPERADMIN", "ADMIN", "CHEF", "MODERATOR", "USER"];
 
 const cloudinaryFolderNames = {
     profile: `${process.env.CLOUDINARY_FOLDER_NAME}/profiles`,
@@ -63,4 +64,4 @@ const mailOptions = {
     ownerEmail: process.env.OWNER_EMAIL
 };
 
-module.exports = { SchemaName, SALT, Tokens, MONGODB_URL, PORT, allowedOrigins, mailOptions, cloudinaryFolderNames, cloudinaryConfig };
+module.exports = { SchemaName, SALT, Tokens, MONGODB_URL, PORT, allowedOrigins, mailOptions, cloudinaryFolderNames, cloudinaryConfig,ROLES };

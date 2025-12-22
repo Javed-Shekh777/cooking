@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
-import { addRecipe, clearSuggestTag, getCategories, getRecipe, suggestTags, updateRecipe } from "../../features/recipeSlice";
+import { addRecipe, clearSuggestTag, getRecipe, suggestTags, updateRecipe } from "../../features/recipeSlice";
+import { getCategories } from "../../features/categorySlice";
+
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Spinner from "../../components/Spinner";
@@ -30,7 +32,9 @@ export default function AddReceipie({ mode = "add" }) {
   const { id } = useParams();
 
   const { user } = useSelector((state) => state.auth);
-  const { suggestTags: suggestions, error, recipe, loading, categories } = useSelector((state) => state.recipe);
+  const { suggestTags: suggestions, error, recipe, loading } = useSelector((state) => state.recipe);
+  const { categories } = useSelector((state) => state.category);
+
 
   console.log(categories);
 
@@ -354,18 +358,19 @@ export default function AddReceipie({ mode = "add" }) {
     <>
       {
         forLoading ? <div className="fixed h-screen w-screen bg-transparent flex items-center justify-center"> <Spinner /></div> : (<div className="max-w-4xl mx-auto sm:p-6 p-3 rounded-2xl border shadow">
-          <div className="flex items-center justify-between">
+          <p className="text-red-500 text-xs font-bold rounded mb-2 bg-slate-100 p-2">
+              For Delete Recipe contact to admin or request ?
+            </p>
+          <div className="   ">
             <h1 className="text-3xl font-bold mb-6">Add / Edit Recipe</h1>
-           <p className="text-red-500 font-bold">
-  Once Recipe created then not can be deleted!!!
-</p>
+            
 
-            <div>
+            {/* <div className="flex-col items-center justify-center">
               {user && (
                 <><img src={user?.profilePic?.url || "/profile/user.jpg"} alt="author" className="mt-2 h-15 w-15 object-cover rounded" />
-                  <label className="block font-medium text-center">{user?.username}</label></>
+                  <label className="block font-medium ">{user?.username}</label></>
               )}
-            </div>
+            </div> */}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6" encType="multipart/form-data">

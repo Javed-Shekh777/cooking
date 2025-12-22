@@ -4,7 +4,7 @@ import Picker from "emoji-picker-react";
 import { RxCross1 } from "react-icons/rx"
 import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
-import { addCategory, getCategories, getCategory, updateCategory } from '../../features/recipeSlice';
+import { addCategory,getCategory,updateCategory,getCategories} from '../../features/categorySlice';
 import { useEffect } from 'react';
 
 import { FaEdit } from 'react-icons/fa';
@@ -40,7 +40,8 @@ const AllCategory = () => {
         setSelectedCategoryId(null);
     };
 
-    const { error, loading, categories } = useSelector((state) => state.recipe);
+    const { error, loading, categories } = useSelector((state) => state.category);
+
     console.log(categories);
 
     useEffect(() => {

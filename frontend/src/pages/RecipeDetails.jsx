@@ -19,6 +19,7 @@ import ShareOptions from '../components/ShareOptions';
 import CommentsSection from '../components/CommentSection';
 import { FRONTEND_URL } from '../constans';
 import { IsUserLikedRecipe } from '../services/features';
+import toast from 'react-hot-toast'
 
 const RecipeDetails = () => {
     const { categoryId, recipeId } = useParams();
@@ -28,7 +29,7 @@ const RecipeDetails = () => {
     const { user } = useSelector((state) => state.auth);
 
 
-    console.log(comments);
+    console.log(comments,recommendRecipes);
 
     // ✅ Local state initialize from Redux meta
     const [liked, setLiked] = useState(false);
@@ -36,12 +37,14 @@ const RecipeDetails = () => {
     const [rating, setRating] = useState(3);
     const [showShareOption, setShowShareOption] = useState(false);
     const [newCommentText, setNewCommentText] = useState('');
-    const [openMenuId, setOpenMenuId] = useState(null);
+    const [openMenu, setOpenMenu] = useState({ id: null, type: null });
+
     const [shownReplies, setShownReplies] = useState([]);
     const [replyingToCommentId, setReplyingToCommentId] = useState(null);
     const [pageLoading, setPageLoading] = useState(false);
     console.log(newCommentText, replyingToCommentId, recipeId, "Hello", shownReplies);
 
+    console.log(user?._id, saved);
     // Fetch recipe
     useEffect(() => {
         setPageLoading(true);
@@ -55,12 +58,13 @@ const RecipeDetails = () => {
 
     // Sync liked/saved with backend
     useEffect(() => {
-        if (recipeMeta) {
-            console.log("fdf dsfdsfyusf sdfsyf sdyf dsofy dsfosd fosyyfsdofsfsdf\nfuds fsu fgsf sd")
-            setLiked(IsUserLikedRecipe(recipe, user?._id).isLiked);
-            setSaved(IsUserLikedRecipe(recipe, user?._id).isSaved);
+        if (recipeMeta && user?._id) {
+            const { isLiked, isSaved } = IsUserLikedRecipe(recipe, user._id);
+            setLiked(isLiked);
+            setSaved(isSaved);
         }
-    }, [recipeMeta]);
+    }, [recipeMeta, user]);
+
 
 
 
@@ -74,47 +78,71 @@ const RecipeDetails = () => {
 
 
 
-    // const toggleMoreMenu = (commentId) => {
-    //     setOpenMenuId(openMenuId === commentId ? null : commentId);
-    // };
 
-    const toggleMoreMenu = (id) => openMenuId === id ? setOpenMenuId(null) : setOpenMenuId(id);
+    const toggleMoreMenu = (id, type) => {
+        setOpenMenu(prev =>
+            prev.id === id && prev.type === type
+                ? { id: null, type: null }
+                : { id, type }
+        );
+    };
 
 
     // ✅ Toggle visibility of replies for a specific comment
     const startReply = (commentId) => {
         setReplyingToCommentId(commentId);
-        // Optional: focus the input box here using useRef
     };
+
 
     const toggleReplies = (commentId) => {
-        if (shownReplies.includes(commentId)) {
-            setShownReplies(shownReplies.filter(id => id !== commentId));
-        } else {
-            setShownReplies([...shownReplies, commentId]);
-        }
+        setShownReplies(prev =>
+            prev.includes(commentId)
+                ? prev.filter(id => id !== commentId)
+                : [...prev, commentId]
+        );
     };
 
-    const handleAddComment = () => {
-        if (!user) return alert("Please login first!");
+    const handleAddComment = async () => {
 
-        if (newCommentText.trim() && recipeId) {
-            dispatch(addComment({
+        try {
+            if (!newCommentText.trim()) return;
+
+
+            const res = await dispatch(addComment({
                 recipeId,
                 text: newCommentText,
-                parentId: replyingToCommentId
-            }));
+                parentId: replyingToCommentId // null = comment, id = reply
+            })).unwrap();
+            setNewCommentText("");
+            setReplyingToCommentId(null);
+            toast.success(res.message);
+
+
+        } catch (error) {
+            toast.error(error.message);
         }
-        setNewCommentText('');
-        setReplyingToCommentId(null);
+
     };
+
 
 
     const handleLikeComment = (commentId) => {
-        if (!user) return alert("Please login first!");
-
+        console.log(commentId);
         dispatch(toggleCommentLike(commentId));
     };
+
+
+    // const toggleMoreMenu = (id) => openMenu === id ? setOpenMenu(null) : setOpenMenu(id);
+
+
+    // const isMenuOpen = openMenu === comment._id;
+    // const isReplyMenuOpen = openMenu === reply._id;
+
+
+
+
+
+
 
 
 
@@ -136,10 +164,11 @@ const RecipeDetails = () => {
         setLiked(prev => !prev);
         try {
             const res = await dispatch(recipeLikeDish(recipeId)).unwrap();
-            if (res?.success) {
-                setLiked(res.data?.isLiked);
-            }
+            setLiked(res.data.isLiked);
+            toast.success(res.message);
         } catch (err) {
+            toast.error(err.message);
+
             console.log(err);
         }
     };
@@ -150,10 +179,12 @@ const RecipeDetails = () => {
         setSaved(prev => !prev);
         try {
             const res = await dispatch(recipeSave(recipeId)).unwrap();
-             if (res?.success) {
-                setSaved(res.data?.isSaved);
-            }
+            setSaved(res.data.isSaved);
+            toast.success(res.message);
+
         } catch (err) {
+            toast.error(err.message);
+
             console.log(err);
         }
     };
@@ -176,17 +207,20 @@ const RecipeDetails = () => {
 
 
     // Placeholder functions for More menu actions
-    const handleDeleteComment = async (commentId, replyId = "") => {
-        if (!user) return alert("Please login first!");
-
+    const handleDeleteComment = async (commentId) => {
         try {
-            await dispatch(deleteComment({ commentId, replyId })).unwrap();
+            await dispatch(deleteComment(commentId)).unwrap();
 
-        } catch (err) {
-            console.log(err);
-        } setOpenMenuId(null);
+            // 🔒 close menu to avoid stale reference
+            setOpenMenu({ id: null, type: null });
+        } catch (error) {
+            console.log(error);
+            toast.error(error.message);
+        }
+
     };
-    const handleReportComment = (commentId) => { console.log("Reporting:", commentId); setOpenMenuId(null); };
+
+    const handleReportComment = (commentId) => { console.log("Reporting:", commentId); setOpenMenu(null); };
 
 
     const handleRatingClick = (starValue) => {
@@ -494,27 +528,18 @@ const RecipeDetails = () => {
                         replyingToCommentId={replyingToCommentId}
                         toggleMoreMenu={toggleMoreMenu}
                         toggleReplies={toggleReplies}
-                        openMenuId={openMenuId}
-                        setOpenMenuId={setOpenMenuId}
+                        openMenu={openMenu}
+                        setOpenMenu={setOpenMenu}
                         handleDeleteComment={handleDeleteComment}
-
-
                     />
 
 
-
-                    {/* Other recipes */}
-                    {/* <div className="rightWrapper mt-10">
-                    <h1 className="text-3xl font-semibold mb-5">Other Recipes</h1>
-                    <div className="flex flex-col gap-y-4">
-                        {dummyRecipes.map((r) => <TastyRecipie key={r.id} />)}
-                    </div>
-                </div> */}
+ 
                     <div className="bottom my-20 no-print">
                         <h1 className="title text-4xl font-semibold text-center my-4">You may like these recipes too</h1>
                         <div className="recipesCards w-full grid lg:grid-cols-4 sm:grid-cols-2 lg:gap-14 gap-10">
                             {recommendRecipes?.length > 0 && recommendRecipes?.map((recp) => (
-                                <RecipieCard key={recp._id} title={recp.title} prepTime={recp.prepTime} cookTime={recp.cookTime} url={recp?.dishImage?.url} />
+                                <RecipieCard key={recp._id} title={recp.title} prepTime={recp.prepTime} cookTime={recp.cookTime} difficultyLevel={recp.difficultyLevel} link={`/category/${recp?.categoryId}/recipe/${recp?._id}`} imgUrl={recp?.dishImage?.url} />
                             ))}
                         </div>
                     </div>

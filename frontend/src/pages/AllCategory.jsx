@@ -2,12 +2,12 @@ import { Link } from "react-router-dom";
 import { FaHome } from "react-icons/fa"; // You can switch to other icon packs
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
-import { getCategories } from "../features/recipeSlice";
+import { getCategories } from "../features/categorySlice";
 import MailBox from "../components/MailBox";
 
 const AllCategories = () => {
     const dispatch = useDispatch();
-    const { error, loading, categories } = useSelector((state) => state.recipe);
+    const { error, loading, categories } = useSelector((state) => state.category);
     console.log(categories);
 
     useEffect(() => {

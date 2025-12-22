@@ -200,28 +200,16 @@ const Contact = () => {
                  ">
                     <MailBox />
 
-                    {/* 
-                    <div className="bottom mt-20 mx-3">
-                        <h1 className='title text-4xl font-semibold text-center my-4'>Check out the delicious recipe </h1>
-                        <div className="recipesCards w-full grid lg:grid-cols-4 sm:grid-cols-2 lg:gap-14 gap-10">
-                            {recipes.map((recp) => (
-                                <RecipieCard key={recp.id} title={recp.title} time={recp.time} type={recp.time} url={recp.imgUrl} isLiked={recp.isLiked} />
-                            ))}
-
-                            {recommendRecipes?.length > 0 && recommendRecipes.map((recp) => (
-                                <RecipieCard key={recp._id} title={recp.title} prepTime={recp.prepTime} cookTime={recp.cookTime} url={recp?.dishImage?.url} difficultyLevel={recp?.difficultyLevel} />
-
-                                // <RecipieCard key={recp.id} title={recp.title} time={recp.time} type={recp.time} url={recp.imgUrl} isLiked={recp.isLiked} />
-                            ))}
-                        </div>
-                    </div> */}
+                    
 
 
                     <div className="bottom my-20 no-print">
                         <h1 className="title text-4xl font-semibold text-center my-4">You may like these recipes too</h1>
                         <div className="recipesCards w-full grid lg:grid-cols-4 sm:grid-cols-2 lg:gap-14 gap-10">
                             {recommendRecipes?.length > 0 && recommendRecipes?.map((recp) => (
-                                <RecipieCard key={recp._id} title={recp.title} prepTime={recp.prepTime} cookTime={recp.cookTime} url={recp?.dishImage?.url} />
+                                <RecipieCard key={recp._id} title={recp.title} prepTime={recp.prepTime} cookTime={recp.cookTime} link={`/category/${recp?.categoryId}/recipe/${recp?._id}`}  imgUrl={recp?.dishImage?.url} />
+
+                                
                             ))}
                         </div>
                     </div>

@@ -1,5 +1,5 @@
 // helper/logUserActivity.js
-const UserLog = require("../models/userLogSchema");
+const UserLog = require("../models/userLog.model");
 
 exports.logUserActivity = async (userId, action, req) => {
     try {
@@ -23,5 +23,6 @@ exports.logUserActivity = async (userId, action, req) => {
         });
     } catch (err) {
         console.error("Error logging user activity:", err.message);
+        throw new Error(err);
     }
 };

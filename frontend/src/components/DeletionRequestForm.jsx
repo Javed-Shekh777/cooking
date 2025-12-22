@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { requestDelete } from "../features/recipeSlice";
+import toast from "react-hot-toast";
 
 export default function DeletionRequestForm({ onClose, id, type = "" }) {
     const [itemId, setItemId] = useState(id || null);
@@ -17,17 +18,21 @@ export default function DeletionRequestForm({ onClose, id, type = "" }) {
         if (!reason) return sertFormError({ name: "reason", value: "Message is requred." });
 
         try {
-            dispatch(
+            const res = await dispatch(
                 requestDelete({
                     id: itemId,
                     itemType,
                     reason
                 })
-            );
+            ).unwrap();
             onClose();
             console.log(itemId, itemType, reason);
+            toast.success(res.message);
+
         } catch (error) {
             console.log(error);
+            toast.error(error.message);
+
         }
 
 
@@ -38,10 +43,10 @@ export default function DeletionRequestForm({ onClose, id, type = "" }) {
 
     return (
         <form onSubmit={submitHanlder} id="deletionRequestForm" className="p-6">
-            <h3 className="text-lg font-semibold mb-2">Request Recipe Deletion</h3>
+            <h3 className="text-lg font-semibold mb-2">Request {type === "RECIPE" ? "Recipe" : "Category"} Deletion</h3>
 
             <p className="text-sm text-gray-600 mb-4">
-                Once submitted, this recipe will remain visible until admin approves.
+                Once submitted, this {type === "RECIPE" ? "recipe" : "category"} will remain visible until admin approves.
             </p>
 
             <textarea

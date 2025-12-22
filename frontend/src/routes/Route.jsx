@@ -11,7 +11,7 @@ import SignUp from "../pages/SignUp";
 import EmailVerifiedPage from "../pages/EmailVerifiedPage";
 import VerifyAccountOTP from "../pages/VerifyAccountOTP";
 import VerifyHandler from "../pages/VerifyHandler";
-import AddReceipie from "../pages/cooker/AddReceipie";
+import AddRecipe from "../pages/cooker/AddRecipe";
 import Chef from "../pages/cooker/Chef";
 import ChefLayout from "../pages/cooker/chefLayout/ChefLayout";
 import AllRecipes from "../pages/cooker/AllRecipes";
@@ -25,10 +25,13 @@ import Favorites from "../pages/Favourites";
 import About from "../pages/About";
 import AdminLayout from "../pages/admin/AdminLayout";
 import AdminRecipes from "../pages/admin/AdminRecipes";
-import AdminDeleteRequests from "../pages/admin/AdminDeleteRequests";
+import AdminAllRquests from "../pages/admin/AdminAllRquests";
 import AuditLogs from "../pages/admin/AuditLogs";
 import AuthGuard from "../components/AuthGuard";
 import RoleGuard from "../components/RoleGuard";
+import ChefRequests from "../pages/cooker/ChefRequests";
+import UserManagement from "../pages/admin/UserManagement";
+import AdminDashboard from "../pages/admin/AdminDashboard";
 
 
 // const router = createBrowserRouter([
@@ -123,18 +126,20 @@ const router = createBrowserRouter([
 
           // ---------- CHEF ----------
           {
-            element: <RoleGuard allowedRoles={["chef"]} />,
+            element: <RoleGuard allowedRoles={["CHEF"]} />,
             children: [
               {
                 path: "chef",
                 element: <ChefLayout />,
                 children: [
                   { index: true, element: <Chef /> },
-                  { path: "recipe/add", element: <AddReceipie mode="add" /> },
-                  { path: "recipe/edit/:id", element: <AddReceipie mode="edit" /> },
+                  { path: "recipe/add", element: <AddRecipe mode="add" /> },
+                  { path: "recipe/edit/:id", element: <AddRecipe mode="edit" /> },
                   { path: "all-recipes", element: <AllRecipes /> },
                   { path: "all-category", element: <AllCategory /> },
                   { path: "setting", element: <Setting /> },
+                  { path: "requests", element: <ChefRequests /> },
+
                 ],
               },
             ],
@@ -142,15 +147,18 @@ const router = createBrowserRouter([
 
           // ---------- ADMIN ----------
           {
-            element: <RoleGuard allowedRoles={["chef"]} />,
+            element: <RoleGuard allowedRoles={["ADMIN"]} />,
             children: [
               {
                 path: "admin",
                 element: <AdminLayout />,
                 children: [
+                  { index: true, element: <AdminDashboard /> },
                   { path: "recipes", element: <AdminRecipes /> },
-                  { path: "delreq", element: <AdminDeleteRequests /> },
+                  { path: "requests", element: <AdminAllRquests /> },
                   { path: "auditlog", element: <AuditLogs /> },
+                  { path: "users", element: <UserManagement /> },
+
                 ],
               },
             ],

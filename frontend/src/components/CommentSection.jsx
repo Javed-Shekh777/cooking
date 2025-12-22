@@ -8,7 +8,7 @@
 // import { useSelector } from 'react-redux';
 
 
-// const CommentsSection = ({ comments, user, handleAddComment, shownReplies, newCommentText, handleDeleteComment,setNewCommentText, handleLikeComment, startReply, replyingToCommentId, toggleMoreMenu, toggleReplies, openMenuId, setOpenMenuId }) => {
+// const CommentsSection = ({ comments, user, handleAddComment, shownReplies, newCommentText, handleDeleteComment,setNewCommentText, handleLikeComment, startReply, replyingToCommentId, toggleMoreMenu, toggleReplies, openMenu, setOpenMenu }) => {
 
 //     // State to manage which comment's 'More' menu is open
 //     // State to manage which comments have their replies expanded
@@ -16,7 +16,7 @@
 
 //     // Toggle the 'More' menu for a specific comment
 //     // const toggleMoreMenu = (commentId) => {
-//     //     setOpenMenuId(openMenuId === commentId ? null : commentId);
+//     //     setOpenMenu(openMenu === commentId ? null : commentId);
 //     // };
 
 //     // Toggle visibility of replies for a specific comment
@@ -29,7 +29,7 @@
 //     // };
 
 //     // Placeholder functions for More menu actions
-//     const handleReportComment = (commentId) => { console.log("Reporting:", commentId); setOpenMenuId(null); };
+//     const handleReportComment = (commentId) => { console.log("Reporting:", commentId); setOpenMenu(null); };
 
 
 
@@ -43,7 +43,7 @@
 //                 <div className="">
 //                     {comments?.length > 0 ? (
 //                         comments.map((comment) => {
-//                             const isMenuOpen = openMenuId === comment._id;
+//                             const isMenuOpen = openMenu === comment._id;
 //                             const isRepliesShown = shownReplies.includes(comment._id); // ✅ Check if THIS comment's replies should be shown
 //                             // Check if current user liked this comment (requires user._id check)
 //                             const userLikedComment = comment.likes?.map(id => id.toString()).includes(user?._id?.toString());
@@ -187,7 +187,7 @@
 import React from "react";
 import { MdMoreHoriz } from "react-icons/md";
 import { FaHeart } from "react-icons/fa";
-import { timeAgo } from "../services/features";
+import { findReplyUser, timeAgo } from "../services/features";
 
 const CommentsSection = ({
     comments,
@@ -201,7 +201,7 @@ const CommentsSection = ({
     replyingToCommentId,
     toggleMoreMenu,
     toggleReplies,
-    openMenuId,
+    openMenu,
     shownReplies
 }) => {
 
@@ -216,186 +216,36 @@ const CommentsSection = ({
             <hr className="border-t-2 border-gray-300 w-24 mb-6" />
 
             {/* Comments List */}
+
             <div className="max-w-3xl">
-                {comments?.length > 0 ? (
-                    comments.map((comment) => {
-                        const isMenuOpen = openMenuId === comment._id;
-                        const isRepliesShown = shownReplies.includes(comment._id);
-                        const userLiked = comment.likes?.includes(user?._id);
 
-                        return (
-                            <div key={comment._id} className="bg-gray-50 p-3 sm:p-4 rounded-lg mb-4 flex gap-x-4">
-                                {/* Profile */}
-                                <img
-                                    src={comment?.user?.profileImage?.url || "/profile/Ellipse 2 (3).jpg"}
-                                    className="h-8 w-8 rounded-full object-cover"
-                                    alt=""
-                                />
-
-                                <div className="flex-grow">
-                                    {/* Username + Time */}
-                                    <div>
-                                        <p className="font-semibold">{comment?.user?.username}</p>
-                                        <span className="text-xs text-gray-400">{timeAgo(comment?.createdAt)}</span>
-                                    </div>
-
-                                    {/* Comment Text */}
-                                    <p className="text-black my-1">{comment.text}</p>
-
-                                    {/* Actions */}
-                                    <div className="flex items-center gap-x-4 text-gray-500 text-sm">
-
-                                        {/* Reply */}
-                                        <span
-                                            onClick={() => startReply(comment._id)}
-                                            className="cursor-pointer hover:text-gray-700"
-                                        >
-                                            Reply
-                                        </span>
-
-                                        {/* Like */}
-                                        <span
-                                            onClick={() => handleLikeComment(comment._id)}
-                                            className={`flex items-center gap-x-1 cursor-pointer ${userLiked ? "text-red-600" : ""}`}
-                                        >
-                                            <FaHeart size={14} />
-                                            {comment.likes?.length || 0}
-                                        </span>
-
-                                        {/* More Menu */}
-                                        <div className="relative">
-                                            <span
-                                                onClick={() => toggleMoreMenu(comment._id)}
-                                                className="cursor-pointer flex items-center gap-x-1"
-                                            >
-                                                <MdMoreHoriz />
-                                                More
-                                            </span>
-
-                                            {isMenuOpen && (
-                                                <div className="absolute bg-white shadow-lg rounded-md w-28 top-6 left-0 z-20">
-                                                    {user?._id === comment.user._id ? (
-                                                        <>
-                                                            <button
-                                                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                                                            >
-                                                                Edit
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleDeleteComment(comment._id)}
-                                                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                                                            >
-                                                                Delete
-                                                            </button>
-                                                        </>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() => handleReportComment(comment._id)}
-                                                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                                                        >
-                                                            Report
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Show Replies Button */}
-                                    <div
-                                        onClick={() => toggleReplies(comment._id)}
-                                        className="flex items-center justify-between cursor-pointer text-gray-500 hover:text-blue-600 mt-2"
-                                    >
-                                        <div className="flex-grow h-px bg-gray-300"></div>
-
-                                        <p className="mx-2 text-xs font-medium">
-                                            {isRepliesShown ? "Hide Replies" : `View all ${comment.replies?.length || 0} Replies`}
-                                        </p>
-
-                                        <div className="flex-grow h-px bg-gray-300"></div>
-                                    </div>
-
-                                    {/* Replies */}
-                                    {/* Replies */}
-                                    {isRepliesShown && comment.replies?.length > 0 && (
-                                        <div className="pl-5 mt-3 border-l-2 border-gray-200 space-y-3">
-                                            {comment.replies.map((reply) => {
-                                                const isReplyMenuOpen = openMenuId === reply._id;
-                                                const isReplyOwner = user?._id === reply?.user?._id;
-
-                                                return (
-                                                    <div key={reply._id} className="flex gap-x-3">
-                                                        {/* Profile */}
-                                                        <img
-                                                            src={reply?.user?.profileImage?.url || "/profile/Ellipse 2 (3).jpg"}
-                                                            className="h-7 w-7 rounded-full"
-                                                            alt=""
-                                                        />
-
-                                                        <div className="flex-grow">
-                                                            <div className="flex items-center justify-between">
-                                                                <div>
-                                                                    <p className="font-semibold text-sm">{reply.user.username}</p>
-                                                                    <span className="text-xs text-gray-400">
-                                                                        {timeAgo(reply?.createdAt)}
-                                                                    </span>
-                                                                    <p className="text-black">{reply.text}</p>
-                                                                </div>
-
-                                                                {/* Reply More Menu */}
-                                                                <div className="relative ml-2">
-                                                                    <span
-                                                                        onClick={() => toggleMoreMenu(reply._id)}
-                                                                        className="cursor-pointer text-gray-600 hover:text-black"
-                                                                    >
-                                                                        <MdMoreHoriz size={18} />
-                                                                    </span>
-
-                                                                    {isReplyMenuOpen && (
-                                                                        <div className="absolute right-0 bg-white shadow-lg rounded-md w-28 z-30 mt-1">
-                                                                            {isReplyOwner ? (
-                                                                                <>
-                                                                                    <button
-                                                                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                                                                                        onClick={() => console.log("Edit Reply")}
-                                                                                    >
-                                                                                        Edit
-                                                                                    </button>
-
-                                                                                    <button
-                                                                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                                                                                        onClick={() => handleDeleteComment(comment._id, reply._id)}
-                                                                                    >
-                                                                                        Delete
-                                                                                    </button>
-                                                                                </>
-                                                                            ) : (
-                                                                                <button
-                                                                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                                                                                    onClick={() => console.log("Report Reply")}
-                                                                                >
-                                                                                    Report
-                                                                                </button>
-                                                                            )}
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-
-                                </div>
-                            </div>
-                        );
-                    })
-                ) : (
-                    <p>No comments yet. Be the first to comment!</p>
+                {comments?.length === 0 && (
+                    <p className="text-gray-500">No comments yet</p>
                 )}
+
+                {comments?.map((comment) => (
+                    <CommentItem
+                        key={comment?._id}
+                        comment={comment}
+                        user={user}
+                        openMenu={openMenu}
+                        toggleMoreMenu={toggleMoreMenu}
+                        startReply={startReply}
+                        handleLikeComment={handleLikeComment}
+                        handleDeleteComment={handleDeleteComment}
+                        shownReplies={shownReplies}
+                        toggleReplies={toggleReplies}
+                    />
+                ))}
+
             </div>
+
+
+
+
+
+
+
 
             {/* Create Comment */}
             <div className="my-6 max-w-3xl">
@@ -404,7 +254,7 @@ const CommentsSection = ({
                 {replyingToCommentId && (
                     <div className="bg-blue-100 p-2 rounded mb-2 flex justify-between">
                         <span>
-                            Replying to: {comments.find((c) => c._id === replyingToCommentId)?.user?.username}
+                            Replying to: {findReplyUser(replyingToCommentId, comments) || "username"}
                         </span>
                         <button onClick={() => startReply(null)} className="text-blue-700 font-bold">Cancel</button>
                     </div>
@@ -434,3 +284,296 @@ const CommentsSection = ({
 };
 
 export default CommentsSection;
+
+
+
+
+
+// const CommentItem = ({
+//     comment,
+//     level = 0,
+//     user,
+//     openMenu,
+//     toggleMoreMenu,
+//     startReply,
+//     handleLikeComment,
+//     handleDeleteComment,
+//     shownReplies,
+//     toggleReplies
+// }) => {
+//     const isRepliesShown = shownReplies.includes(comment._id);
+//     const isMenuOpen = openMenu?.id === comment._id;
+
+//     const userLiked = comment.likes?.includes(user?._id);
+
+//     return (
+//         <div
+//             className={`flex ${level > 0 && level < 2? "" : "ml-6 border-l-2 pl-4"} gap-3 mb-3 `}
+//         >
+//             <div className=" ">
+//                 {/* AVATAR */}
+//                 <img
+//                     src={comment?.user?.profileImage?.url || "/profile/default.jpg"}
+//                     className={level === 0 ? "h-8 w-8" : "h-7 w-7"}
+//                     alt=""
+//                 />
+
+//                 <div className="flex-1">
+
+//                     {/* USER */}
+//                     <p className="font-semibold text-sm">
+//                         {comment?.user?.username}
+//                     </p>
+
+//                     <p className="text-xs text-gray-400">
+//                         {new Date(comment.createdAt).toLocaleString()}
+//                     </p>
+
+//                     {/* TEXT */}
+//                     <p className="my-1 text-sm">{comment.text}</p>
+
+//                     {/* ACTIONS */}
+//                     <div className="flex gap-4 text-xs text-gray-500">
+
+//                         <span
+//                             className="cursor-pointer"
+//                             onClick={() => startReply(comment._id)}
+//                         >
+//                             Reply
+//                         </span>
+
+//                         <span
+//                             className={`flex items-center gap-1 cursor-pointer ${userLiked ? "text-red-600" : ""
+//                                 }`}
+//                             onClick={() => handleLikeComment(comment?._id)}
+//                         >
+//                             <FaHeart size={12} />
+//                             {comment.likes?.length || 0}
+//                         </span>
+
+//                         <span
+//                             className="cursor-pointer"
+//                             onClick={() =>
+//                                 toggleMoreMenu(comment?._id, "comment")
+//                             }
+//                         >
+//                             <MdMoreHoriz />
+//                         </span>
+//                     </div>
+
+//                     {/* MENU */}
+//                     {isMenuOpen && (
+//                         <div className="bg-white shadow rounded mt-2 w-28">
+//                             {user?._id === comment.user._id ? (
+//                                 <button
+//                                     onClick={() => handleDeleteComment(comment?._id)}
+//                                     className="block w-full px-4 py-2 text-left hover:bg-gray-100"
+//                                 >
+//                                     Delete
+//                                 </button>
+//                             ) : (
+//                                 <button className="block w-full px-4 py-2 text-left hover:bg-gray-100">
+//                                     Report
+//                                 </button>
+//                             )}
+//                         </div>
+//                     )}
+
+//                     {/* TOGGLE REPLIES */}
+//                     {comment.replies?.length > 0 && (
+//                         <p
+//                             className="text-xs my-1.5 text-blue-600 cursor-pointer mt-2"
+//                             onClick={() => toggleReplies(comment?._id)}
+//                         >
+//                             {console.log(comment)}
+//                             {isRepliesShown
+//                                 ? "Hide replies"
+//                                 : `View ${comment.replies.length} replies`}
+//                         </p>
+//                     )}
+
+//                     {/* 🔁 RECURSIVE REPLIES */}
+//                     {isRepliesShown &&
+//                         comment.replies?.map((reply) => (
+//                             <CommentItem
+//                                 key={reply._id}
+//                                 comment={reply}
+//                                 level={level+1}
+//                                 user={user}
+//                                 openMenu={openMenu}
+//                                 toggleMoreMenu={toggleMoreMenu}
+//                                 startReply={startReply}
+//                                 handleLikeComment={handleLikeComment}
+//                                 handleDeleteComment={handleDeleteComment}
+//                                 shownReplies={shownReplies}
+//                                 toggleReplies={toggleReplies}
+//                             />
+//                         ))}
+//                 </div>
+//             </div>
+
+
+//         </div>
+//     );
+// };
+
+
+
+const CommentItem = ({
+  comment,
+  level = 0,
+  user,
+  openMenu,
+  toggleMoreMenu,
+  startReply,
+  handleLikeComment,
+  handleDeleteComment,
+  shownReplies,
+  toggleReplies
+}) => {
+  const isRepliesShown = shownReplies.includes(comment._id);
+  const isMenuOpen = openMenu?.id === comment._id;
+
+  const userLiked = comment.likes?.includes(user?._id);
+
+  // 🔹 Helper to get all replies flattened (only 1 level of indentation)
+  const getAllReplies = (replies) => {
+    let allReplies = [];
+    const traverse = (arr) => {
+      arr.forEach(r => {
+        allReplies.push(r);
+        if (r.replies?.length) traverse(r.replies);
+      });
+    };
+    traverse(replies || []);
+    return allReplies;
+  };
+
+  const repliesToShow = level === 0 ? getAllReplies(comment.replies) : [];
+
+  return (
+    <div className={`flex gap-3 mb-3 ${level > 0 ? "ml-6 border-l-2 pl-4" : ""}`}>
+      {/* AVATAR */}
+      <img
+        src={comment?.user?.profileImage?.url || "/profile/default.jpg"}
+        className={`${level === 0 ? "h-8 w-8" : "h-7 w-7"} rounded-full`}
+        alt=""
+      />
+
+      <div className="flex-1">
+        {/* USER INFO */}
+        <p className="font-semibold text-sm">{comment?.user?.username}</p>
+        <p className="text-xs text-gray-400">
+          {new Date(comment.createdAt).toLocaleString()}
+        </p>
+
+        {/* COMMENT TEXT */}
+        <p className="my-1 text-sm">{comment.text}</p>
+
+        {/* ACTIONS */}
+        <div className="flex gap-4 text-xs text-gray-500">
+          <span className="cursor-pointer" onClick={() => startReply(comment._id)}>
+            Reply
+          </span>
+
+          <span
+            className={`flex items-center gap-1 cursor-pointer ${userLiked ? "text-red-600" : ""}`}
+            onClick={() => handleLikeComment(comment._id)}
+          >
+            <FaHeart size={12} /> {comment.likes?.length || 0}
+          </span>
+
+          <span
+            className="cursor-pointer"
+            onClick={() => toggleMoreMenu(comment._id, "comment")}
+          >
+            <MdMoreHoriz />
+          </span>
+        </div>
+
+        {/* MENU */}
+        {isMenuOpen && (
+          <div className="bg-white shadow rounded mt-2 w-28">
+            {user?._id === comment.user._id ? (
+              <button
+                onClick={() => handleDeleteComment(comment._id)}
+                className="block w-full px-4 py-2 text-left hover:bg-gray-100"
+              >
+                Delete
+              </button>
+            ) : (
+              <button className="block w-full px-4 py-2 text-left hover:bg-gray-100">
+                Report
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* TOGGLE REPLIES */}
+        {repliesToShow.length > 0 && level === 0 && (
+          <p
+            className="text-xs my-1 text-blue-600 cursor-pointer mt-2"
+            onClick={() => toggleReplies(comment._id)}
+          >
+            {isRepliesShown
+              ? "Hide replies"
+              : `View ${repliesToShow.length} replies`}
+          </p>
+        )}
+
+        {/* REPLIES */}
+        {isRepliesShown && level === 0 &&
+          repliesToShow.map((reply) => {
+            const isReplyMenuOpen = openMenu?.id === reply._id;
+            const userLikedReply = reply.likes?.includes(user?._id);
+
+            return (
+              <div key={reply._id} className="flex gap-3 mb-2 ml-6">
+                <img
+                  src={reply?.user?.profileImage?.url || "/profile/default.jpg"}
+                  className="h-8 w-8 rounded-full"
+                  alt=""
+                />
+                <div className="flex-1">
+                  <p className="font-semibold text-sm">{reply.user.username}</p>
+                  <p className="text-sm">{reply.text}</p>
+
+                  <div className="flex gap-4 text-xs text-gray-500 mt-1">
+                    <span className="cursor-pointer" onClick={() => startReply(reply._id)}>
+                      Reply
+                    </span>
+                    <span
+                      className={`flex items-center gap-1 cursor-pointer ${userLikedReply ? "text-red-600" : ""}`}
+                      onClick={() => handleLikeComment(reply._id)}
+                    >
+                      <FaHeart size={12} /> {reply.likes?.length || 0}
+                    </span>
+                    <span className="cursor-pointer" onClick={() => toggleMoreMenu(reply._id, "reply")}>
+                      <MdMoreHoriz />
+                    </span>
+                  </div>
+
+                  {isReplyMenuOpen && (
+                    <div className="bg-white shadow rounded mt-2 w-28">
+                      {user?._id === reply.user._id ? (
+                        <button
+                          onClick={() => handleDeleteComment(reply._id)}
+                          className="block w-full px-4 py-2 text-left hover:bg-gray-100"
+                        >
+                          Delete
+                        </button>
+                      ) : (
+                        <button className="block w-full px-4 py-2 text-left hover:bg-gray-100">
+                          Report
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+      </div>
+    </div>
+  );
+};

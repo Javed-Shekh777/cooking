@@ -6,7 +6,7 @@ import {
     PiForkKnifeBold
 
 } from 'react-icons/pi';
-import RecipieCard from './RecipieCard';
+ 
 
 
  

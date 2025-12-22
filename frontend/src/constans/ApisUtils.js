@@ -5,55 +5,77 @@ export const authApis = {
     verifyMail: "/auth/verify-mail",
     localloginUser: "/auth/locallogin",
     logout: "/auth/logout",
-    contact: "/auth/contact",
-    userProfile: "/auth/user-profile",
-    updateProfile: "/auth/update-profile",
+    contact: "/user/contact",
+    userProfile: "/user/user-profile",
+    updateProfile: "/user/update-profile",
     refreshToken: "/auth/refresh",
-
     mailChangeReq: "/auth/request-email-change",
     mailChange: "/auth/verify-email-change",
 };
 
 export const recipeApis = {
-    suggestTag: "/recipe/suggest-tags",
-    addRecipe: "/recipe/add-recipe",
-    updateRecipe: "/recipe/update-recipe",
-    getCageroy: "/recipe/get-categories",
-    getRecipes: "/recipe/get-recipes",
-    getRecipesByCategory: "/recipe/get-recipes-category",
-    getRecipe: "/recipe/get-recipe",
-    addCategory: "/recipe/add-category",
-    updateCategory: "/recipe/update-category",
-    getRecommendedRecipes: "/recipe/get-recommendrecipes",
-    getCategory: "/recipe/get-category",
-    getCategories: "/recipe/get-categories",
-    dashboard: "/recipe/dashboard",
-    addComment: "/recipe/add-comment",
-    deleteComment: "/recipe/delete-comment",
-    getComments: "/recipe/get-comments",
-    toggleCommentLike: "/recipe/like-comment",
-    recipeLikeDish: "/recipe/recipe-likedish",
-    recipeShare: "/recipe/recipe-share",
-    recipeView: "/recipe/recipe-view",
-    recipeSave: "/recipe/recipe-save",
-    submitRecipeRating: "/recipe/recipe-rating",
+    suggestTag: "/recipes/suggest-tags",
+    addRecipe: "/recipes/add-recipe",
+    updateRecipe: "/recipes/update-recipe",
+    getCageroy: "/recipes/get-categories",
+    getRecipes: "/recipes/get-recipes",
+    getRecipesByCategory: "/recipes/get-recipes-category",
+    getRecipe: "/recipes/get-recipe",
 
+    getRecommendedRecipes: "/recipes/get-recommendrecipes",
 
-
-
-
+    dashboard: "/recipes/dashboard",
+    addComment: "/comments/add-comment",
+    deleteComment: "/comments/delete-comment",
+    getComments: "/comments/get-comments",
+    toggleCommentLike: "/comments/like-comment",
+    recipeLikeDish: "/recipes/recipe-like",
+    recipeShare: "/recipes/recipe-share",
+    recipeView: "/recipes/recipe-view",
+    recipeSave: "/recipes/recipe-save",
+    submitRecipeRating: "/recipes/recipe-rating",
 };
 
-export const adminApis = {
-    adminDashboard: "/admin/dashboard",
-    manageUsers: "/admin/manage-users",
-    manageRecipes: "/admin/manage-recipes",
-    manageCategories: "/admin/manage-categories",
-    // New 
 
-    getDeleteReq: "/recipe/get-delete-req",
-    updateDeleteReq: "/recipe/update-delete-req",
-    auditLog: "/recipe/get-auditlog"
+export const categoryApi = {
+    addCategory: "/categories/add-category",
+    updateCategory: "/categories/update-category",
+    getCategory: "/categories/get-category",
+    getCategories: "/categories/get-categories",
+}
+
+
+export const adminApis = {
+
+
+    adminDashboard: "/admin/dashboard",
+    manageUsers: "/admin/users",
+    userBlockUnBlock: "/admin/user/block-unblock",
+    deleteReq: "/admin/delete-requests",
+    auditLog: "/admin/audit-logs",
+    rejectReq: "/admin/reject-request",
+    moderation: "/admin/moderation",
+    chefApprove: "/admin/chef/:id/approve",
+    getDeleteReq: "/recipes/get-delete-req",
+    updateDeleteReq: "/recipes/update-delete-req",
+
+    // Recipe 
+
+    recipeSoftDel: "/recipes/delete-recipe",
+    recipeDel: "/recipes/permanent-delete",
+    recipeRestore: "/recipes/restore-recipe",
+
+    categorySoftDel: "/categories/delete-category",
+    categoryDel: "/categories/permanent-delete",
+    categoryRestore: "/categories/restore-category",
+
+
+
+
+
+
+
+
 };
 export const chefApis = {
     chefDashboard: "/chef/dashboard",
@@ -62,7 +84,10 @@ export const chefApis = {
     updateMyRecipe: "/chef/update-recipe",
 
     // New 
-    deleteReq: "/recipe/delete-req",
+    deleteReq: "/recipes/delete-req",
+    createReq: "/chef/create-req",
+    analytics: "/chef/analytics",
+    allRequests: "/chef/requests",
 };
 export const moderatorApis = {
     moderatorDashboard: "/moderator/dashboard",

@@ -4,10 +4,12 @@ import { Link, useParams } from "react-router-dom";
 import { FaHome } from "react-icons/fa"; // You can switch to other icon packs
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
-import { getRecipesCategory } from "../features/recipeSlice";
+// import { getRecipesCategory } from "../features/recipeSlice";
 import Spinner from "../components/Spinner";
 
-import { getCategories, getRecipes } from '../features/recipeSlice';
+import {  getRecipes } from '../features/recipeSlice';
+import { getCategories } from '../features/categorySlice';
+
 import MailBox from '../components/MailBox';
 import { FaEdit } from 'react-icons/fa';
 import { FaShare, FaComment, FaEye, FaHeart, FaStopwatch } from "react-icons/fa6"
@@ -28,7 +30,9 @@ const tagColors = [
 const CategoryRecipe = () => {
     const { categoryId } = useParams();
     const dispatch = useDispatch();
-    const { recipe, error, loading, categories, recipeCategory, recipes } = useSelector((state) => state.recipe);
+    const { recipe, error, loading, recipeCategory, recipes } = useSelector((state) => state.recipe);
+    const {  categories } = useSelector((state) => state.category);
+
 
     console.log("Recipe category:", recipeCategory)
     // Fetch recipe

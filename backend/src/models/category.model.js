@@ -6,8 +6,11 @@ const categorySchema = new mongoose.Schema({
     type: String,
     required: [true, "Category name is required"],
     trim: true,
-    unique: true
+    unique: true,
+    lowercase: true,
+    index: true
   },
+
   description: {
     type: String,
     trim: true,
@@ -20,21 +23,25 @@ const categorySchema = new mongoose.Schema({
   },
 
   icon: { type: String },          // emoji or icon string
-  count: { type: Number, default: 0 },  // number of recipes in this category
-  isActive: {
-    type: Boolean,
-    default: true
+  count: {
+    type: Number,
+    default: 0,
+    min: 0
   },
-  deactivatedAt: { type: Date },
-  isDeleted: {
-    type: Boolean,
-    default: false
-  },
-  deletedAt: { type: Date },
+
+
+
   deletedBy: {
     type: mongoose.Types.ObjectId,
     ref: SchemaName.user
-  }
+  },
+
+  isActive: { type: Boolean, default: true },
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: Date,
+  deleteReason: String,
+
+
 }, { timestamps: true });
 
 module.exports = mongoose.model(SchemaName.recipeCategory, categorySchema);

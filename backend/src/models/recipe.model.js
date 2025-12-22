@@ -41,23 +41,30 @@ const recipeSchema = new mongoose.Schema(
       trim: true
     },
 
-    directions: [
-      {
-        stepNumber: { type: Number },
+
+
+    directions: {
+      type: [{
+        stepNumber: { type: Number, required: true },
         heading: { type: String, trim: true },
-        description: { type: String, trim: true },
+        description: { type: String, trim: true, required: true },
         stepImage: ImageSchema,
-        stepVideo: VideoSchema // 👈 अब हर step में image या video दोनों optional हैं
-      }
-    ],
-    video: VideoSchema,// 👈 अब हर step में image या video दोनों optional हैं
+        stepVideo: VideoSchema
+      }],
+      validate: [arr => arr.length > 0, "At least one step is required"]
+    },
+
+
+    dishVideo: VideoSchema,// 👈 अब हर step में image या video दोनों optional हैं
     dishImage: ImageSchema, // 👈 सिर्फ image allowed
     // dishVideo हटा दिया गया है
 
     categoryId: {
       type: mongoose.Types.ObjectId,
-      ref: SchemaName.recipeCategory
+      ref: SchemaName.recipeCategory,
+      required: true
     },
+
 
     nutrients: [
       {
@@ -67,13 +74,16 @@ const recipeSchema = new mongoose.Schema(
       }
     ],
 
-    ingredients: [
-      {
-        name: String,
-        quantity: String,
-        unit: String // "g", "kg", "ml"
-      }
-    ],
+
+    ingredients: {
+      type: [{
+        name: { type: String, required: true },
+        quantity: { type: String },
+        unit: { type: String }
+      }],
+      required: true
+    },
+
 
     prepTime: TimeSchema,
     cookTime: TimeSchema,
@@ -92,9 +102,21 @@ const recipeSchema = new mongoose.Schema(
     estimatedCost: {
       type: Number, // or String like "₹200"
     },
-    isPublished: { type: Boolean, default: true },
+    isPublished: {
+      type: Boolean,
+      default: true
+    },
+
     commentsCount: { type: Number, default: 0 },
-    slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true
+    },
+
 
     // likes: { type: Number, default: 0 },
     // views: { type: Number, default: 0 },
@@ -104,7 +126,13 @@ const recipeSchema = new mongoose.Schema(
       value: { type: Number, min: 1, max: 5 },
       comment: String
     }],
-    avgRating: { type: Number, default: 0 },
+    avgRating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5
+    },
+
     totalRatings: { type: Number, default: 0 },
 
     isDeleted: {
@@ -124,6 +152,8 @@ const recipeSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+recipeSchema.index({ title: "text", tags: "text" });
+
 
 const recipeModel = mongoose.model(SchemaName.recipe, recipeSchema);
 

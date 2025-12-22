@@ -9,20 +9,20 @@ import { useEffect } from 'react';
 
 
 
-const SignUp = () => {
+const SignIn = () => {
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({ username: "", password: "" });
     const [formError, setFormError] = useState({ field: "", value: "" });
     const dispatch = useDispatch();
-    const { error, loading,user,authChecked  } = useSelector((state) => state.auth);
+    const { error, loading, user, authChecked } = useSelector((state) => state.auth);
 
 
     useEffect(() => {
         if (user) {
             navigate("/");
         }
-    }, [user]);
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -53,8 +53,9 @@ const SignUp = () => {
             navigate("/");
         } catch (err) {
             console.log("Errr catch:", err);
+            toast.error(err.message || "Registration failed");
+
             setFormData({ username: "", password: "" });
-            toast.error( err || "Login failed");
         }
 
     }
@@ -153,4 +154,4 @@ const SignUp = () => {
     )
 }
 
-export default SignUp
+export default SignIn

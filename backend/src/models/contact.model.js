@@ -20,8 +20,8 @@ const contactSchema = new mongoose.Schema({
     },
     enquiryType: {
         type: String,
-        enum: ["General", "Support", "Feedback", "Other"], // apne hisab se types add kare
-        default: "General"
+        enum: ["GENERAL", "SUPPORT", "FEEDBACK", "OTHER"], // apne hisab se types add kare
+        default: "GENERAL"
     },
     message: {
         type: String,

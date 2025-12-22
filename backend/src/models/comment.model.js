@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const { SchemaName } = require("../constants");
-
 const replySchema = new mongoose.Schema({
   user: {
     type: mongoose.Types.ObjectId,
@@ -12,13 +11,9 @@ const replySchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-  likes: [{ type: mongoose.Types.ObjectId, ref: SchemaName.user }],
+  likes: [{ type: mongoose.Types.ObjectId, ref: SchemaName.user }]
+}, { timestamps: true });
 
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
-});
 
 const commentSchema = new mongoose.Schema({
   recipeId: {
@@ -36,9 +31,28 @@ const commentSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+   parentId: {
+    type: mongoose.Types.ObjectId,
+    ref: SchemaName.recipeComment,
+    default: null   // null = top-level comment
+  },
   likes: [{ type: mongoose.Types.ObjectId, ref: SchemaName.user }],
-  replies: [replySchema]
+  // replies: [replySchema],
+
+  isDeleted: {
+    type: Boolean,
+    default: false
+  },
+  deletedAt: {
+    type: Date
+  },
+  deletedBy: {
+    type: mongoose.Types.ObjectId,
+    ref: SchemaName.user
+  },
+
 }, { timestamps: true });
+commentSchema.index({ recipeId: 1, createdAt: -1 });
 
 const recipeCommentModel = mongoose.model(SchemaName.recipeComment, commentSchema);
 

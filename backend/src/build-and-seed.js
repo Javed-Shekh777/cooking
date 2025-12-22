@@ -1,6 +1,6 @@
 require("dotenv").config();
 const DB = require("./config/db");
-const seed = require("./seed/catTagSeeder"); // सुनिश्चित करें कि यह async फ़ंक्शन है
+const seed = require("./seed/catTag.seeder"); // सुनिश्चित करें कि यह async फ़ंक्शन है
 
 async function buildAndSeed() {
     const shouldSeed = process.env.RUN_SEED_ON_BUILD === 'true';

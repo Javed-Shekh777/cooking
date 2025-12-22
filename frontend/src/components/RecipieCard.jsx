@@ -3,10 +3,10 @@ import { PiForkKnifeBold } from "react-icons/pi";
 import {  FaStar} from 'react-icons/fa';
 
 
-const RecipieCard = ({ url, isLiked, title, cookTime, prepTime, difficultyLevel,avgRating,showRating=false }) => {
+const RecipieCard = ({ link="#",imgUrl, isLiked, title, cookTime, prepTime, difficultyLevel,avgRating,showRating=false }) => {
 
     return (
-        <div className="group cursor-pointer relative rounded-3xl overflow-hidden px-3.5
+        <a href={link} className="group cursor-pointer relative rounded-3xl overflow-hidden px-3.5
         pt-2 pb-7  "
             style={{
                 background: `linear-gradient(180deg, rgba(231, 249, 253, 0) 0%, #E7F9FD 100%)`
@@ -15,7 +15,7 @@ const RecipieCard = ({ url, isLiked, title, cookTime, prepTime, difficultyLevel,
             {/* Image */}
             <div className="relative flex aspect-square sm:aspect-[5/3] overflow-hidden">
                 <img
-                    src={url}
+                    src={imgUrl}
                     alt={`${title} Recipe`}
                     className="rounded-xl duration-300 w-full h-full 
                   object-cover transform hover:scale-105 transition-transform"
@@ -59,7 +59,7 @@ const RecipieCard = ({ url, isLiked, title, cookTime, prepTime, difficultyLevel,
                     <div className="type flex items-center gap-x-1"><PiForkKnifeBold size={16} className='font-bold' /><span>{cookTime?.value}{cookTime?.unit}</span></div>
                 </div>
             </div>
-        </div>
+        </a>
     );
 }
 

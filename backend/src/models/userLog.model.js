@@ -3,10 +3,15 @@ const { SchemaName } = require("../constants");
 
 const userLogSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: SchemaName.user, required: true },
-    action: { type: String, required: true },  // e.g. "REGISTER", "VERIFY_EMAIL", "LOGIN"
+    action: {
+        type: String,
+        enum: ["REGISTER", "VERIFY_EMAIL", "LOGIN", "LOGOUT", "PASSWORD_RESET"],
+        required: true
+    },
     ip: String,
-    userAgent: String,
-    createdAt: { type: Date, default: Date.now }
-});
+    userAgent: String
+}, { timestamps: true });
+
+userLogSchema.index({ userId: 1, createdAt: -1 });
 
 module.exports = mongoose.model(SchemaName.userLog, userLogSchema);

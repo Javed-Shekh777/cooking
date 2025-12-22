@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { SchemaName, SALT, Tokens } = require("../constants");
+const { SchemaName, SALT, Tokens, ROLES } = require("../constants");
 const bcrypt = require("bcryptjs");
 const JWT = require("jsonwebtoken");
 
@@ -7,7 +7,7 @@ const JWT = require("jsonwebtoken");
 const userSchema = new mongoose.Schema({
     role: {
         type: String,
-        enum: ['superadmin', 'admin', 'chef', 'moderator', 'user'],
+        enum: ROLES,
         default: 'user',
         required: [true, "Role is required."]
     },
@@ -27,9 +27,14 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: [true, "Username is required"],
         lowercase: true,
-        trim: true
+        trim: true,
+        unique: true
     },
+
     mobile: {
+        type: String,
+    },
+     dob: {
         type: String,
     },
     password: {
@@ -42,6 +47,51 @@ const userSchema = new mongoose.Schema({
         url: { type: String, default: "" },
         publicId: { type: String, default: "" }
     },
+    bio: {
+        type: String,
+        maxlength: 300,
+        default: ""
+    },
+    gender: {
+        type: String,
+        enum: ["male", "female", "other"]
+    },
+    dateOfBirth: {
+        type: Date
+    },
+    location: {
+        // city: String,
+        // country: String
+        type:String
+    },
+
+    isChefApproved: {
+        type: Boolean,
+        default: false
+    },
+    chefAppliedAt: Date,
+    chefApprovedAt: Date,
+    chefProfile: {
+        experienceYears: Number,
+        specialization: [String], // eg: ["Indian", "Chinese"]
+        certifications: [String]
+    },
+
+    lastLoginAt: {
+        type: Date
+    },
+
+    savedRecipes: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: SchemaName.recipe
+    }],
+
+    likedRecipes: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: SchemaName.recipe
+    }],
+
+
     provider: {
         type: String,
         enum: ['local', 'google', 'facebook', 'twitter', 'apple', 'microsoft'],
@@ -62,6 +112,21 @@ const userSchema = new mongoose.Schema({
         verificationCode: { type: String },
         verificationExpiry: { type: Date },
     },
+    isBlocked: {
+        type: Boolean,
+        default: false
+    },
+    isDeleted: {
+        type: Boolean,
+        default: false
+    },
+    deletedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: SchemaName.user
+    },
+    deletedAt: {
+        type: Date
+    }
 
 }, { timestamps: true });
 

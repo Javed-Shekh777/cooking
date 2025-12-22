@@ -164,7 +164,7 @@ const SignUp = () => {
                                 {formError.field === "fullname" && <span className='text-sm text-red-500'>{formError.value}</span>}
                                 <input
                                     type="text"
-                                    placeholder="Your name"
+                                    placeholder="Your username"
                                     value={formData.username}
                                     onChange={handleChange}
                                     name='username'
@@ -206,12 +206,12 @@ const SignUp = () => {
                                 {/* Role Selection */}
                                 <div className="flex items-center justify-around mt-2">
                                     <label className="flex items-center gap-2">
-                                        <input type="radio" name="role" value="chef" className='h-5 w-5' checked={formData.role === "chef"}
+                                        <input type="radio" name="role" value="CHEF" className='h-5 w-5' checked={formData.role === "CHEF"}
                                             onChange={handleChange} />
                                         Chef
                                     </label>
                                     <label className="flex items-center gap-2">
-                                        <input type="radio" name="role" value="user" className='h-5 w-5' checked={formData.role === "user"} onChange={handleChange} />
+                                        <input type="radio" name="role" value="USER" className='h-5 w-5' checked={formData.role === "USER"} onChange={handleChange} />
                                         User
                                     </label>
                                 </div>

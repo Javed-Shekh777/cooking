@@ -1,25 +1,22 @@
 const { errorResponse, successResponse } = require("../util/response");
-const User = require("../models/userModel");
-const { verifyMail, accountCreationMail, contactMail } = require("../helper/sendMail");
+const User = require("../models/user.model");
+const { verifyMail, accountCreationMail, contactMail, chefApplicationMail, chefVerificationMail } = require("../helper/sendMail");
 const { generateNumOTP } = require("../helper/generateOTP");
 const JWT = require("jsonwebtoken");
 const { Tokens, cloudinaryFolderNames } = require("../constants");
 const { logUserActivity } = require("../helper/logUserActivity");
-const Contact = require("../models/contactSchema");
+const Contact = require("../models/contact.model");
 const { cloudinaryUpload, cloudinaryDelete } = require("../util/cloudinary");
-
-
-
-
+const { startSession } = require("../helper/common");
+const AuditLog = require("../models/auditLog.model");
 
 
 exports.localRegister = async (req, res, next) => {
-    const session = await User.startSession();
-    session.startTransaction();
+    const session = await startSession();
 
     try {
-        const { username, email, password = "", role, fullName } = req.body;
-        if (!username || !email || !role || !fullName || !password) {
+        const { username, email, password = "", role = "USER", fullName } = req.body;
+        if (!username || !email || !fullName || !password) {
             return errorResponse(res, "All fields required", 400);
         }
 
@@ -32,56 +29,106 @@ exports.localRegister = async (req, res, next) => {
         const verificationExpiry = Date.now() + 2 * 60 * 1000;
         const webToken = JWT.sign({ email, verificationCode }, Tokens.webToken, { expiresIn: Tokens.webTokenExpiry });
 
-        const createdUser = await User.create([{
+        const isChef = role === "CHEF";
+
+        const [createdUser] = await User.create([{
             username,
             email,
             password,
-            role,
+            fullName,
+            role: isChef ? "CHEF" : "USER",
+            isChefApproved: false,
+            chefAppliedAt: isChef ? new Date() : null,
             verificationCode,
             verificationExpiry,
             webToken,
-            fullName
         }], { session });
 
         await verifyMail({
-            username: createdUser[0].username,
-            email: createdUser[0].email,
-            verificationCode: createdUser[0].verificationCode,
-            webToken: createdUser[0].webToken,
+            username: createdUser.username,
+            email: createdUser.email,
+            verificationCode,
+            webToken,
             purpose: "REGISTER"
         });
 
+        if (isChef) {
+            await chefApplicationMail({
+                username: createdUser.username,
+                email: createdUser.email
+            });
+        }
+        // 🧾 Logs
+        await logUserActivity(
+            createdUser._id,
+            "REGESTER",
+            req
+        );
+
+        await AuditLog.create(
+            [{
+                action: isChef ? "CHEF_REGISTERED_PENDING_APPROVAL" : "USER_REGISTERED",
+                performedBy: createdUser._id,
+                targetId: createdUser._id,
+                targetType: "USER"
+            }],
+            { session }
+        );
 
 
-        // Log
-        await logUserActivity(createdUser[0]._id, "REGISTER_AND_VERIFICATION_MAIL_SENT", req);
 
         await session.commitTransaction();
         session.endSession();
 
-
-        return successResponse(res, "User registered. Please verify your email.", createdUser[0]);
+        return successResponse(res,
+            isChef
+                ? "Chef registered. Email verification sent & approval pending."
+                : "User registered. Please verify your email.",
+            createdUser
+        );
     } catch (err) {
         await session.abortTransaction();
         session.endSession();
-        next(err);
+        next(error);
         // return errorResponse(res, err.message || "Registration failed. Please try again.", 500);
     }
 };
 
 
-exports.verifyMail = async (req, res) => {
+exports.verifyMail = async (req, res,next) => {
     try {
         const { email, token } = req.body;
         if (!email || !token) {
-            return errorResponse(res, "Something went wrong.", 400);
+            return errorResponse(res, "Email or token missing.", 400);
         }
         const user = await User.findOne({ email });
         if (!user) return errorResponse(res, "User not found.", 404);
-        // if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+        // ✅ Already verified
+        if (user.isVerified) {
+            return errorResponse(res, "Email already verified.", 400);
+        }
+
+        // 🔐 Verify JWT token
+        let decoded;
+        try {
+            decoded = JWT.verify(token, Tokens.webToken);
+        } catch (err) {
+            return errorResponse(res, "Invalid or expired verification token.", 401);
+        }
+
+        // 🔍 Token email match check
+        if (decoded.email !== user.email) {
+            return errorResponse(res, "Token does not match user.", 401);
+        }
+
+        // ⏳ Expiry check (DB side)
+        if (user.verificationExpiry && user.verificationExpiry < Date.now()) {
+            return errorResponse(res, "Verification code expired.", 410);
+        }
+
 
         // Verify token
-        JWT.verify(token, Tokens.webToken);
 
         user.isVerified = true;
         user.verificationCode = null;
@@ -93,16 +140,21 @@ exports.verifyMail = async (req, res) => {
         await logUserActivity(user._id, "EMAIL_VERIFIED", req);
 
         // Send welcome mail
-        await accountCreationMail(user);
+        // 📧 Role based welcome mail
+        if (user.role === "CHEF") {
+            await chefVerificationMail({ username: user.username, email: user.email }); // "Chef request received"
+        } else {
+            await accountCreationMail({ username: user.username, email: user.email }); // Normal welcome
+        }
+
 
         // Optional: Log that welcome mail was sent
         await logUserActivity(user._id, "WELCOME_MAIL_SENT", req);
 
-
-
-        return successResponse(res, "Mail verified successfully.");
+        return successResponse(res, "Email verified successfully.");
 
     } catch (error) {
+        next(error);
         return errorResponse(res, error.message || "Verification failed. Please try again.", 500);
 
     }
@@ -110,7 +162,7 @@ exports.verifyMail = async (req, res) => {
 };
 
 
-exports.localLogin = async (req, res) => {
+exports.localLogin = async (req, res,next) => {
     try {
         const { username, password } = req.body;
 
@@ -125,9 +177,22 @@ exports.localLogin = async (req, res) => {
             ]
         });
 
-        if (!user) return errorResponse(res, "User not exist.", 404);
+        if (!user) return errorResponse(res, "User does not exist.", 404);
         if (!user.isVerified) {
             return errorResponse(res, "Please verify your email.", 400);
+        }
+
+        if (user.isBlocked) {
+            return errorResponse(res, "Your account is blocked by admin.", 403);
+        }
+
+        // 👨‍🍳 Chef approval check
+        if (user.role === "CHEF" && !user.isChefApproved) {
+            return errorResponse(
+                res,
+                "Chef approval pending. Please wait for admin approval.",
+                403
+            );
         }
 
         const isCorrect = await user.isPasswordCorrect(password);
@@ -138,14 +203,26 @@ exports.localLogin = async (req, res) => {
 
         // ✅ ONLY refresh token DB me rakho
         user.refreshToken = refreshToken;
+        user.lastLoginAt = new Date();
         await user.save({ validateBeforeSave: false });
 
+        await AuditLog.create(
+            [{
+                action: "USER_LOGIN",
+                performedBy: user._id,
+                targetId: user._id,
+                targetType: "USER"
+            }],
+        );
+
+        // ❌ Remove sensitive fields
         user.password = undefined;
+        user.refreshToken = undefined;
 
         const cookieOptions = {
             httpOnly: true,
-            secure: true,
-            //   sameSite: "strict",
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict"
         };
 
         // ✅ ONLY refresh token cookie
@@ -157,153 +234,102 @@ exports.localLogin = async (req, res) => {
         });
 
     } catch (error) {
-        return errorResponse(res, error.message, 500);
+        console.log(error);
+        next(error);
+
+        // return errorResponse(res, error.message, 500);
     }
 };
 
 
-exports.refreshToken = async (req, res) => {
+exports.refreshToken = async (req, res,next) => {
     try {
         const token = req.cookies.refreshToken;
-        console.log("Refresh", req.cookies, token);
         if (!token) return errorResponse(res, "No refresh token", 401);
 
-        const payload = JWT.verify(token, Tokens.refreshToken);
-        console.log(payload);
+        let payload;
+        try {
+            payload = JWT.verify(token, Tokens.refreshToken);
+        } catch {
+            return errorResponse(res, "Invalid or expired refresh token", 401);
+        }
+
 
         const user = await User.findOne({
             _id: payload.id,
             refreshToken: token
         });
 
-        console.log("1");
         if (!user) return errorResponse(res, "Invalid refresh token", 401);
 
         const newAccessToken = user.generateAccessToken();
         const newRefreshToken = user.generateRefreshToken();
-        console.log("2");
 
         user.refreshToken = newRefreshToken;
         await user.save({ validateBeforeSave: false });
-        console.log("3");
 
         const cookieOptions = {
             httpOnly: true,
-            secure: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict"
         };
-        console.log("4");
 
+        // ✅ ONLY refresh token cookie
         res.cookie("refreshToken", newRefreshToken, cookieOptions);
 
+
         user.password = undefined;
-        console.log("5");
 
         return successResponse(res, "Token refreshed", {
             accessToken: newAccessToken,
             user
         });
 
-    } catch (err) {
-        console.log("Error", err);
-        return errorResponse(res, "Session expired", 401);
+    } catch (error) {
+        next(error);
+
+        console.log("Error", error);
+        // return errorResponse(res, "Session expired", 401);
     }
 };
 
-exports.logout = async (req, res) => {
+exports.logout = async (req, res,next) => {
     try {
+        let user= null;
         if (req.cookies?.refreshToken) {
-            await User.updateOne(
+           user  =  await User.updateOne(
                 { refreshToken: req.cookies.refreshToken },
                 { $set: { refreshToken: null } }
             );
         }
 
-        res.clearCookie("refreshToken");
+        // await AuditLog.create(
+        //     [{
+        //         action: "USER_LOGOUT",
+        //         performedBy: req.user._id,
+        //         targetId: recipe._id,
+        //         targetType: "USER"
+        //     }],
+        // );
+
+
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: true,
+            // sameSite: "strict",
+        });
+
 
         return successResponse(res, "Logout successful");
     } catch (error) {
-        return errorResponse(res, error.message, 500);
+        next(error);
+
+        // return errorResponse(res, error.message, 500);
     }
 };
 
 
-exports.contact = async (req, res) => {
-    try {
-        console.log(req.body);
-        const { username, email, subject, enquiryType, message } = req.body;
-
-        if (!username || !email || !subject || !message) {
-            return errorResponse(res, "All fields are required", 400);
-        }
-
-        const newContact = await Contact.create({ username, email, subject, enquiryType, message });
-
-        // Send email notification
-
-        await contactMail(newContact);
-        return successResponse(res, "Contact form submitted successfully");
-    } catch (error) {
-        return errorResponse(res, "Failed to contact.", 500);
-    }
-}
-
-
-exports.getUserProfile = async (req, res) => {
-    try {
-        const userId = req.user._id;
-        const user = await User.findById(userId).select("-password -accessToken -refreshToken -verificationCode -verificationExpiry -webToken");
-        if (!user) {
-            return errorResponse(res, "User not found", 404);
-        }
-        return successResponse(res, "User profile fetched successfully", user);
-    } catch (error) {
-        return errorResponse(res, error.message || "Failed to fetch user profile", 500);
-    }
-};
-
-
-exports.updateUserProfile = async (req, res) => {
-    try {
-        const userId = req.user._id;
-        const { fullName, username, oldImage } = req.body;
-
-        const user = await User.findById(userId);
-        if (!user) {
-            return errorResponse(res, "User not found", 404);
-        }
-
-        // Handle image upload
-        if (req.file) {
-            const uploadRes = await cloudinaryUpload(req.file.buffer, cloudinaryFolderNames.profile, "image");
-
-            if (uploadRes?.secure_url && uploadRes?.public_id) {
-                user.profileImage = {
-                    url: uploadRes.secure_url,
-                    publicId: uploadRes.public_id,
-                };
-
-                if (oldImage) {
-                    await cloudinaryDelete(oldImage);
-                }
-            } else {
-                return errorResponse(res, "Image upload failed", 500);
-            }
-        }
-
-        // Update profile fields
-        user.fullName = fullName || user.fullName;
-        user.username = username || user.username;
-
-        await user.save();
-        return successResponse(res, "User profile updated successfully", user);
-    } catch (error) {
-        return errorResponse(res, error.message || "Failed to update user profile", 500);
-    }
-};
-
-
-
-exports.requestEmailChange = async (req, res) => {
+exports.requestEmailChange = async (req, res,next) => {
     try {
         const userId = req.user._id;
         const { newEmail } = req.body;
@@ -341,15 +367,16 @@ exports.requestEmailChange = async (req, res) => {
         // Log
         await logUserActivity(user._id, "EMAIL_CHANGE_REQUESTED", req);
 
-        return successResponse(res, "OTP sent to new email. Please verify.", user);
+        return successResponse(res, "OTP sent to new email. Please verify.");
 
     } catch (error) {
-        return errorResponse(res, error.message || "Failed to request email change", 500);
+        next(error);
+
+        // return errorResponse(res, error.message || "Failed to request email change", 500);
     }
 };
 
-
-exports.verifyEmailChange = async (req, res) => {
+exports.verifyEmailChange = async (req, res,next) => {
     try {
         const userId = req.user._id;
         const { otp } = req.body;
@@ -362,7 +389,7 @@ exports.verifyEmailChange = async (req, res) => {
             return errorResponse(res, "OTP expired", 400);
         }
 
-        if (user.emailChange.verificationCode !== otp) {
+        if (String(user.emailChange.verificationCode) !== String(otp)) {
             return errorResponse(res, "Invalid OTP", 400);
         }
 
@@ -377,6 +404,8 @@ exports.verifyEmailChange = async (req, res) => {
         return successResponse(res, "Email updated successfully", user);
 
     } catch (error) {
-        return errorResponse(res, error.message || "Failed to verify email change", 500);
+        next(error);
+
+        // return errorResponse(res, error.message || "Failed to verify email change", 500);
     }
 };

@@ -5,8 +5,11 @@ import RecipieCard from '../components/RecipieCard';
 import MailBox from '../components/MailBox';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast"
 
-import { fetchRecommendations, getCategories } from '../features/recipeSlice';
+import { fetchRecommendations } from '../features/recipeSlice';
+import { getCategories } from '../features/categorySlice';
+
 
 const Home = () => {
     const categoryImages = [
@@ -123,19 +126,25 @@ const Home = () => {
     ]
 
     const dispatch = useDispatch();
-    const { error, loading, categories,recommendRecipes } = useSelector((state) => state.recipe);
-  const { user, authChecked } = useSelector((state) => state.auth);
+    const { error, loading, recommendRecipes } = useSelector((state) => state.recipe);
 
-    console.log(authChecked,user);
+    const { categories } = useSelector((state) => state.category);
+    console.log("CATE:", categories);
+
+    const { user, authChecked } = useSelector((state) => state.auth);
+
+    console.log(authChecked, user);
 
     useEffect(() => {
         let mounted = true;
         (async () => {
             try {
                 const res = await dispatch(getCategories()).unwrap(); // backend endpoint (see below)
-                dispatch(fetchRecommendations({categoryId:null,limit:10}));
+                dispatch(fetchRecommendations({ categoryId: null, limit: 10 }));
                 if (!mounted) return;
             } catch (err) {
+                console.log("Errr catch:", err);
+                toast.error(err.message || "failed to load");
                 console.error(err);
             }
         })();
@@ -200,9 +209,9 @@ const Home = () => {
                     <div className="bottom mt-20">
                         <div className="recipesCards w-full grid lg:grid-cols-3 sm:grid-cols-2 lg:gap-14 gap-10">
                             {recommendRecipes?.length > 0 && recommendRecipes.map((recp) => (
-                                <RecipieCard key={recp._id} title={recp.title} prepTime={recp.prepTime} cookTime={recp.cookTime} url={recp?.dishImage?.url} avgRating={recp?.avgRating} showRating={true} />
+                                <RecipieCard key={recp._id} title={recp.title} prepTime={recp.prepTime} cookTime={recp.cookTime} link={`/category/${recp?.categoryId}/recipe/${recp?._id}`} imgUrl={recp?.dishImage?.url} avgRating={recp?.avgRating} showRating={true} />
 
-                                // <RecipieCard key={recp.id} title={recp.title} time={recp.time} type={recp.time} url={recp.imgUrl} isLiked={recp.isLiked} />
+
                             ))}
                         </div>
                     </div>
@@ -256,9 +265,8 @@ const Home = () => {
                     <div className="bottom mt-6">
                         <div className="recipesCards  grid xl:grid-cols-4 lg:grid-cols-3 sm:grid-cols-2 lg:gap-14 gap-10">
                             {recommendRecipes?.length > 0 && recommendRecipes.map((recp) => (
-                                <RecipieCard key={recp._id} title={recp.title} prepTime={recp.prepTime} cookTime={recp.cookTime} url={recp?.dishImage?.url} difficultyLevel={recp?.difficultyLevel} />
+                                <RecipieCard key={recp._id} title={recp.title} prepTime={recp.prepTime} cookTime={recp.cookTime} imgUrl={recp?.dishImage?.url} difficultyLevel={recp?.difficultyLevel} />
 
-                                // <RecipieCard key={recp.id} title={recp.title} time={recp.time} type={recp.time} url={recp.imgUrl} isLiked={recp.isLiked} />
                             ))}
                         </div>
                     </div>

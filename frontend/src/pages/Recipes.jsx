@@ -1,7 +1,9 @@
 import React from 'react'
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux'
-import { getCategories, getRecipes, fetchRecommendations } from '../features/recipeSlice';
+import {  getRecipes, fetchRecommendations } from '../features/recipeSlice';
+import { getCategories} from '../features/categorySlice';
+
 import RecipieCard from '../components/RecipieCard';
 import MailBox from '../components/MailBox';
 import { FaEdit } from 'react-icons/fa';
@@ -31,7 +33,9 @@ const dummyRecipes = [
 
 const Recipes = () => {
     const dispatch = useDispatch();
-    const { suggestTags: suggestions, error, recipes = [], loading, categories = [], recommendRecipes = [] } = useSelector((state) => state.recipe);
+    const { suggestTags: suggestions, error, recipes = [], loading, recommendRecipes = [] } = useSelector((state) => state.recipe);
+    const { categories = [] } = useSelector((state) => state.category);
+
     const [selectedCategory, setSelectedCategory] = useState("All");
 
     useEffect(() => {
@@ -163,7 +167,7 @@ console.log(selectedCategory);
                     <h1 className="title text-4xl font-semibold text-center my-4">You may like these recipes too</h1>
                     <div className="recipesCards w-full grid lg:grid-cols-4 sm:grid-cols-2 lg:gap-14 gap-10">
                         {recommendRecipes?.length > 0 && recommendRecipes?.map((recp) => (
-                            <RecipieCard key={recp._id} title={recp.title} prepTime={recp.prepTime} cookTime={recp.cookTime} url={recp?.dishImage?.url} />
+                            <RecipieCard key={recp._id} title={recp.title} prepTime={recp.prepTime} cookTime={recp.cookTime} link={`/category/${recp?.categoryId}/recipe/${recp?._id}`} imgUrl={recp?.dishImage?.url} />
                         ))}
                     </div>
                 </div>

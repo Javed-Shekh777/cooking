@@ -5,28 +5,22 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const { allowedOrigins } = require("./constants");
 const errorHandler = require("./util/errorHandler");
-const authRoute = require("./routes/authRoute");
-const recipeRoute = require("./routes/recipeRoute");
-const Schh = require("./models/recipeCategorySchema");
+const authRoutes = require("./routes/auth.routes");
+const recipeRoutes = require("./routes/recipe.routes");
+const adminRoutes = require("./routes/admin.routes");
+const chefRoutes = require("./routes/chef.routes");
+const userRoutes = require("./routes/user.routes");
+const categoryRoutes = require("./routes/category.routes");
+const commentRoutes = require("./routes/comment.routes");
+
+
 const path = require("path");
 
 
 
 // default 
 app.use(helmet());
-// const corsOptionsDelegate = (req, callback) => {
-//   const origin = req.header("Origin");
-//   let corsOptions;
 
-//   if (!origin || allowedOrigins.includes(origin)) {
-//     corsOptions = { origin: true, credentials: true };
-//   } else {
-//     corsOptions = { origin: false };
-//     console.log("❌ CORS blocked:", origin);
-//   }
-
-//   callback(null, corsOptions);
-// };
 
 if (process.env.NODE_ENV === "development") {
   app.use(cors({
@@ -56,8 +50,15 @@ app.use(cookieParser());
 
 
 // User Defined Routes
-app.use("/api/auth", authRoute);
-app.use("/api/recipe", recipeRoute);
+app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/chef", chefRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/recipes", recipeRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/comments", commentRoutes);
+
+
 
 app.get("/", (req, res) => {
   res.json({ message: "Server working fine ✅" });

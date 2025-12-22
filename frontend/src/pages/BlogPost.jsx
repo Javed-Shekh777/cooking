@@ -4,9 +4,19 @@ import { FaBars, FaFacebookF, FaInstagram, FaTwitter } from "react-icons/fa6";
 import { useParams } from 'react-router-dom';
 import MailBox from '../components/MailBox';
 import RecipieCard from '../components/RecipieCard';
+import { useDispatch, useSelector } from 'react-redux';
+import { useEffect } from 'react';
+import { fetchRecommendations } from '../features/recipeSlice';
 
 
 const BlogPost = () => {
+    const dispatch = useDispatch();
+    const { recommendRecipes } = useSelector((s) => s.recipe);
+
+    useEffect(() => {
+        dispatch(fetchRecommendations({ limit: 10 }));
+    }, []);
+
 
     const recipes = [
         {
@@ -45,6 +55,8 @@ const BlogPost = () => {
     ];
 
     const { id } = useParams();
+
+
     return (
         <section>
             <div className="blogWrapper md:px-8 px-4 py-20">
@@ -117,8 +129,9 @@ const BlogPost = () => {
                     <div className="bottom mt-20 mx-3">
                         <h1 className='title text-4xl font-semibold text-center mb-10'>Check out the delicious recipe </h1>
                         <div className="recipesCards w-full grid lg:grid-cols-4 sm:grid-cols-2 lg:gap-14 gap-10">
-                            {recipes.map((recp) => (
-                                <RecipieCard key={recp.id} title={recp.title} time={recp.time} type={recp.time} url={recp.imgUrl} isLiked={recp.isLiked} />
+                            {recommendRecipes.map((recp) => (
+                                <RecipieCard key={recp._id} title={recp.title} prepTime={recp.prepTime} link={`/category/${recp?.categoryId}/recipe/${recp?._id}`} cookTime={recp.cookTime} imgUrl={recp?.dishImage?.url} avgRating={recp?.avgRating} showRating={true} />
+
                             ))}
                         </div>
                     </div>

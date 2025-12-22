@@ -1,5 +1,5 @@
-const Category = require("../models/recipeCategorySchema"); // path apne project ke hisaab se update karna
-const Tag = require("../models/tagSchema"); // path apne project ke hisaab se update karna
+const Category = require("../models/category.model"); // path apne project ke hisaab se update karna
+const Tag = require("../models/tag.model"); // path apne project ke hisaab se update karna
 
 async function seed() {
   try {

@@ -1,6 +1,6 @@
 const { Tokens } = require("../constants");
 const JWT = require("jsonwebtoken");
-const User = require("../models/userModel");
+const User = require("../models/user.model");
 
 const optionalAuthenticated = async (req, res, next) => {
     try {

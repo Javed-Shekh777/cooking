@@ -1,6 +1,5 @@
 import React from 'react';
 import { FaBars, FaFacebookF, FaInstagram, FaTwitter } from "react-icons/fa6";
-import RecipieCard from '../components/RecipieCard';
 import MailBox from '../components/MailBox';
 import { BlogRecipie, Pagination, TastyRecipie } from '../components/BlogRecipie';
 
