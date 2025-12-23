@@ -81,7 +81,7 @@ const Navbar = () => {
                                                 <a href="/chef">Settings</a>
                                             </li>
                                             <li className="memuItem px-4 py-2 hover:bg-gray-300 rounded-md duration-300 transition-all">
-                                                <a href="/chef">Services</a>
+                                                <a href={`${user?.role === "CHEF" ? "/chef" : "/admin"}`}>Dashboard</a>
                                             </li>
                                         </>
                                     )}
@@ -116,7 +116,7 @@ const Navbar = () => {
                                 <img src="/profile/user.jpg" alt="" className='rounded-full h-10 w-10' />
                                 {showProfilebar && <ul className='absolute left-0 top-[110%] z-[1000]  bg-white p-1 w-40 rounded-md shadow gap-y-1'>
                                     <li className='memuItem px-4 py-2 hover:bg-gray-300 rounded-md   duration-300 transition-all'><a href="/profile">Profile</a></li>
-                                    {['CHEF', 'ADMIN','SUPERADMIN'].includes(user?.role) && (
+                                    {['CHEF', 'ADMIN', 'SUPERADMIN'].includes(user?.role) && (
                                         <>
                                             <li className="memuItem px-4 py-2 hover:bg-gray-300 rounded-md duration-300 transition-all">
                                                 <a href="/chef">Settings</a>
@@ -127,7 +127,7 @@ const Navbar = () => {
                                         </>
                                     )}
 
-                                    {user?.role ==="USER" && <li className='memuItem px-4 py-2 hover:bg-gray-300 rounded-md  duration-300 transition-all'><a href="/favourites">Favourites</a></li>}
+                                    {user?.role === "USER" && <li className='memuItem px-4 py-2 hover:bg-gray-300 rounded-md  duration-300 transition-all'><a href="/favourites">Favourites</a></li>}
                                     <li className={`memuItem px-4 py-2 bg-gray-300 rounded-md mt-2 duration-300 transition-all cursor-pointer   hover:bg-black/70  text-white `}>
                                         <button
                                             onClick={logouthandler}

@@ -57,7 +57,7 @@ export const adminApis = {
     auditLog: "/admin/audit-logs",
     rejectReq: "/admin/reject-request",
     moderation: "/admin/moderation",
-    chefApprove: "/admin/chef/:id/approve",
+    chefApprove: "/admin/chef/approve",
     getDeleteReq: "/recipes/get-delete-req",
     updateDeleteReq: "/recipes/update-delete-req",
 

@@ -13,6 +13,8 @@ const SchemaName = {
 };
 
 const ROLES = ["SUPERADMIN", "ADMIN", "CHEF", "MODERATOR", "USER"];
+const FRONTEND_URL=process.env.FRONTEND;
+const NODE_ENV=process.env.NODE_ENV;
 
 const cloudinaryFolderNames = {
     profile: `${process.env.CLOUDINARY_FOLDER_NAME}/profiles`,
@@ -38,7 +40,7 @@ const MONGODB_URL =
         : `${dbUrl}/${dbName}?retryWrites=true&w=majority&appName=AtlasApp`;
 
 const PORT = process.env.PORT;
-console.log(process.env.FRONTEND);
+ 
 const allowedOrigins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -64,4 +66,4 @@ const mailOptions = {
     ownerEmail: process.env.OWNER_EMAIL
 };
 
-module.exports = { SchemaName, SALT, Tokens, MONGODB_URL, PORT, allowedOrigins, mailOptions, cloudinaryFolderNames, cloudinaryConfig,ROLES };
+module.exports = { SchemaName, SALT, Tokens, MONGODB_URL, PORT, allowedOrigins, mailOptions, cloudinaryFolderNames, cloudinaryConfig,ROLES ,FRONTEND_URL,NODE_ENV};

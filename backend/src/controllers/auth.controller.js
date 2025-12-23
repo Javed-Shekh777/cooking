@@ -3,19 +3,21 @@ const User = require("../models/user.model");
 const { verifyMail, accountCreationMail, contactMail, chefApplicationMail, chefVerificationMail } = require("../helper/sendMail");
 const { generateNumOTP } = require("../helper/generateOTP");
 const JWT = require("jsonwebtoken");
-const { Tokens, cloudinaryFolderNames } = require("../constants");
+const { Tokens, cloudinaryFolderNames, NODE_ENV } = require("../constants");
 const { logUserActivity } = require("../helper/logUserActivity");
 const Contact = require("../models/contact.model");
 const { cloudinaryUpload, cloudinaryDelete } = require("../util/cloudinary");
 const { startSession } = require("../helper/common");
 const AuditLog = require("../models/auditLog.model");
+const Request = require("../models/deleteRequest.model");
+
 
 
 exports.localRegister = async (req, res, next) => {
     const session = await startSession();
 
     try {
-        const { username, email, password = "", role = "USER", fullName } = req.body;
+        const { username, email, password = "", role = "USER", fullName, } = req.body;
         if (!username || !email || !fullName || !password) {
             return errorResponse(res, "All fields required", 400);
         }
@@ -25,13 +27,13 @@ exports.localRegister = async (req, res, next) => {
             return errorResponse(res, "User already exists", 400);
         }
 
-        const verificationCode = generateNumOTP(6);
-        const verificationExpiry = Date.now() + 2 * 60 * 1000;
-        const webToken = JWT.sign({ email, verificationCode }, Tokens.webToken, { expiresIn: Tokens.webTokenExpiry });
 
-        const isChef = role === "CHEF";
+        const normalizedRole = role?.toUpperCase();
+        const isChef = normalizedRole === "CHEF";
+        console.log(req.body);
 
-        const [createdUser] = await User.create([{
+
+        let insertData = {
             username,
             email,
             password,
@@ -39,10 +41,40 @@ exports.localRegister = async (req, res, next) => {
             role: isChef ? "CHEF" : "USER",
             isChefApproved: false,
             chefAppliedAt: isChef ? new Date() : null,
-            verificationCode,
-            verificationExpiry,
-            webToken,
-        }], { session });
+
+        }
+
+        if (isChef) {
+            let { experienceYears, specialization, certifications } = req.body;
+            if (
+                experienceYears === undefined ||
+                !Array.isArray(specialization) ||
+                specialization.length === 0 ||
+                !Array.isArray(certifications) ||
+                certifications.length === 0
+            ) {
+                return errorResponse(res, "Chef fields required", 400);
+            }
+
+            insertData.chefProfile = {
+                experienceYears,
+                specialization,
+                certifications
+            }
+        }
+
+
+        const verificationCode = generateNumOTP(6);
+        const verificationExpiry = Date.now() + 10 * 60 * 1000;
+        const webToken = JWT.sign({ email, verificationCode }, Tokens.webToken, { expiresIn: Tokens.webTokenExpiry });
+
+        insertData.verificationCode = verificationCode;
+        insertData.verificationExpiry = verificationExpiry;
+        insertData.webToken = webToken;
+
+
+
+        const [createdUser] = await User.create([insertData], { session });
 
         await verifyMail({
             username: createdUser.username,
@@ -61,7 +93,7 @@ exports.localRegister = async (req, res, next) => {
         // 🧾 Logs
         await logUserActivity(
             createdUser._id,
-            "REGESTER",
+            "REGISTER",
             req
         );
 
@@ -70,7 +102,7 @@ exports.localRegister = async (req, res, next) => {
                 action: isChef ? "CHEF_REGISTERED_PENDING_APPROVAL" : "USER_REGISTERED",
                 performedBy: createdUser._id,
                 targetId: createdUser._id,
-                targetType: "USER"
+                targetType: isChef ? "CHEF" : "USER"
             }],
             { session }
         );
@@ -86,7 +118,7 @@ exports.localRegister = async (req, res, next) => {
                 : "User registered. Please verify your email.",
             createdUser
         );
-    } catch (err) {
+    } catch (error) {
         await session.abortTransaction();
         session.endSession();
         next(error);
@@ -96,12 +128,15 @@ exports.localRegister = async (req, res, next) => {
 
 
 exports.verifyMail = async (req, res, next) => {
+    const session = await startSession();
+
     try {
-        const { email, token } = req.body;
-        if (!email || !token) {
-            return errorResponse(res, "Email or token missing.", 400);
+        const { email, token, otp } = req.body;
+        if (!email) {
+            return errorResponse(res, "Email  missing.", 400);
         }
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email }).session(session);
+
         if (!user) return errorResponse(res, "User not found.", 404);
 
         // ✅ Already verified
@@ -109,26 +144,40 @@ exports.verifyMail = async (req, res, next) => {
             return errorResponse(res, "Email already verified.", 400);
         }
 
+
+
         // 🔐 Verify JWT token
         let decoded;
-        try {
-            decoded = JWT.verify(token, Tokens.webToken);
-        } catch (err) {
-            return errorResponse(res, "Invalid or expired verification token.", 401);
+
+        if (token) {
+            try {
+                decoded = JWT.verify(token, Tokens.webToken);
+                // 🔍 Token email match check
+                if (decoded.email !== user.email) {
+                    return errorResponse(res, "Token does not match user.", 401);
+                }
+            } catch (err) {
+                return errorResponse(res, "Invalid or expired verification token.", 401);
+            }
         }
 
-        // 🔍 Token email match check
-        if (decoded.email !== user.email) {
-            return errorResponse(res, "Token does not match user.", 401);
+
+
+        if (otp) {
+            if (user.verificationCode !== otp) {
+                return errorResponse(res, "Invalid OTP.", 401);
+            }
+            // 🔍 Email match check
+            if (email !== user.email) {
+                return errorResponse(res, "Email does not match user.", 401);
+            }
         }
 
         // ⏳ Expiry check (DB side)
-        if (user.verificationExpiry && user.verificationExpiry < Date.now()) {
+        if (user.verificationExpiry && user.verificationExpiry.getTime() < Date.now()) {
             return errorResponse(res, "Verification code expired.", 410);
         }
 
-
-        // Verify token
 
         user.isVerified = true;
         user.verificationCode = null;
@@ -148,14 +197,45 @@ exports.verifyMail = async (req, res, next) => {
         }
 
 
-        // Optional: Log that welcome mail was sent
-        await logUserActivity(user._id, "WELCOME_MAIL_SENT", req);
 
+        if (user?.role === "CHEF") {
+            await Request.create(
+                [
+                    {
+                        itemId: user?._id,
+                        itemType: user?.role === "CHEF" ? "CHEF" : "USER",
+                        reason: "Requested for approval of being a Chef",
+                        requestedBy: user?._id,
+                    }
+                ],
+                { session }
+            );
+        }
+
+
+
+
+        await AuditLog.create(
+            [{
+                action: "WELCOME_MAIL_SENT",
+                performedBy: user._id,
+                targetId: user._id,
+                targetType: user?.role === "CHEF" ? "CHEF" : "USER"
+            }],
+            { session }
+        );
+
+
+
+        await session.commitTransaction();
+        session.endSession();
         return successResponse(res, "Email verified successfully.");
 
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         next(error);
-        return errorResponse(res, error.message || "Verification failed. Please try again.", 500);
+        // return errorResponse(res, error.message || "Verification failed. Please try again.", 500);
 
     }
 
@@ -221,7 +301,7 @@ exports.localLogin = async (req, res, next) => {
 
         const cookieOptions = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
+            secure: NODE_ENV === "production",
             // sameSite: "strict"
         };
 
@@ -270,7 +350,7 @@ exports.refreshToken = async (req, res, next) => {
 
         const cookieOptions = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
+            secure: NODE_ENV === "production",
             // sameSite: "strict"
         };
 
@@ -315,7 +395,7 @@ exports.logout = async (req, res, next) => {
 
         res.clearCookie("refreshToken", {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
+            secure: NODE_ENV === "production",
 
             // sameSite: "strict",
         });

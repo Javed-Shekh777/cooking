@@ -45,7 +45,8 @@ const auditLogSchema = new mongoose.Schema({
             "DATA_MIGRATED",
             "CHEF_REGISTERED_PENDING_APPROVAL",
             "USER_UNBLOCKED",
-            "USER_BLOCKED"
+            "USER_BLOCKED",
+            "WELCOME_MAIL_SENT"
         ],
         required: true
     },

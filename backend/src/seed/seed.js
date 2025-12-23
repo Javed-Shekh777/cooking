@@ -1,6 +1,7 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
 const Recipe = require("../models/recipe.model"); // <-- apne model ka path yaha daalo
+const { MONGODB_URL } = require("../constants");
 
 const seedData = [
   {
@@ -21,7 +22,7 @@ const seedData = [
 
 async function seed() {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(MONGODB_URL);
     console.log("✅ MongoDB Connected!");
 
     await Recipe.deleteMany(); // optional (purana data remove karega)

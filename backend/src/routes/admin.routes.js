@@ -24,7 +24,7 @@ router.route("/delete-requests").get(getDeleteRequests);
 router.route("/audit-logs").get(getAuditLog);
 router.route("/reject-request/:id").post(rejectRequest);
 router.route("/dashboard").get(getAdminDashboardStats);
-router.route("/chef/:id/approve").patch(allotDisAllotChef);
+router.route("/chef/approve/:id").patch(allotDisAllotChef);
 router.route("/moderation").get(getModerationStats);
 
 // router.route("/top-recipes").get(getDashboardStats);

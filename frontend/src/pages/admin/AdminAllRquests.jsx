@@ -34,7 +34,7 @@ const AdminAllRquests = () => {
     return matchesSearch && matchesItemType && matchesStatus;
   });
 
-  const requestChange = async (id, status, type) => {
+  const requestChange = async (id, status, type,approve) => {
     try {
 
       let res;
@@ -47,7 +47,7 @@ const AdminAllRquests = () => {
 
       if (status === "APPROVED") {
         res = await dispatch(
-          approveRequest({ id, type })
+          approveRequest({ id, type,approve })
         ).unwrap();
       }
 
@@ -119,7 +119,7 @@ const AdminAllRquests = () => {
           {req?.status === "PENDING" ? (
             <div className="flex gap-2">
               <button
-                onClick={() => requestChange(req.itemId, "APPROVED", req?.itemType)}
+                onClick={() => requestChange(req.itemId, "APPROVED", req?.itemType,true)}
                 className="bg-green-600 h-[35px] text-white px-3 py-1 rounded"
               >
                 Approve

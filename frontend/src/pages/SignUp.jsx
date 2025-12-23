@@ -14,11 +14,16 @@ const SignUp = () => {
 
     const [formData, setFormData] = useState({ username: "", email: "", password: "", conPassword: "", role: "", fullName: "" });
     const [formError, setFormError] = useState({ field: "", value: "" });
+    const [experienceYears, setExperienceYears] = useState(null);
+    const [specialization, setSpecialization] = useState([]);
+    const [certifications, setCertifications] = useState([]);
+    const [specInput, setSpecInput] = useState("");
+    const [certInput, setCertInput] = useState("");
     const dispatch = useDispatch();
-    const signUpData = useSelector((state) => state.auth);
+    const { loading, error } = useSelector((state) => state.auth);
 
-    console.log("\n User Data: ", signUpData);
 
+    console.log(experienceYears, certifications, specialization);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -53,13 +58,33 @@ const SignUp = () => {
             return;
         }
 
+        if (formData.role === "CHEF") {
+            if (experienceYears === undefined || experienceYears === null) {
+                setFormError({ field: "experienceYears", value: "Experience Years is required." });
+                return;
+            }
+
+            if (!Array.isArray(specialization) || specialization.length === 0) {
+                setFormError({ field: "specialization", value: "Specialization is required." });
+                return;
+            }
+            if (!Array.isArray(certifications) || certifications.length === 0) {
+                setFormError({ field: "certifications", value: "Certifications is required." });
+                return;
+            }
+        }
+
+
         console.log(formData);
         setFormError({ field: "", value: "" });
 
         try {
-            const result = await dispatch(localregisterUser(formData)).unwrap();
+
+
+
+            const result = await dispatch(localregisterUser({ ...formData, experienceYears, specialization, certifications })).unwrap();
             toast.success(result?.message || "User registered successfully!");
-            navigate("/sign-in");
+            navigate(`/verify-mail?email=${formData.email}&username=${formData.username}`);
         } catch (err) {
             console.log("Errr catch:", err);
             toast.error(err.message || "Registration failed");
@@ -67,6 +92,34 @@ const SignUp = () => {
 
     }
 
+    const addSpec = () => {
+        const val = specInput.trim();
+        if (val && !specialization.includes(val)) {
+            setSpecialization([...specialization, val]);
+            setSpecInput("");
+            setFormError({ field: "", value: "" });
+
+        }
+    };
+    const removeSpec = (val) => {
+        setSpecialization(specialization.filter((s) => s !== val));
+        setFormError({ field: "", value: "" });
+
+    };
+    const addCert = () => {
+        const val = certInput.trim();
+        if (val && !certifications.includes(val)) {
+            setCertifications([...certifications, val]);
+            setCertInput("");
+            setFormError({ field: "", value: "" });
+
+        }
+    };
+    const removeCert = (val) => {
+        setCertifications(certifications.filter((c) => c !== val));
+        setFormError({ field: "", value: "" });
+
+    };
 
 
     const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -74,7 +127,7 @@ const SignUp = () => {
     console.log(GOOGLE_CLIENT_ID);
 
 
-    
+
 
     // const initializeGoogleSignIn = () => {
     //     window.google.accounts.id.initialize({
@@ -107,7 +160,7 @@ const SignUp = () => {
     // const googleLogin = () => {
     //     // Only call prompt here → NO initialize again
     //     window.google.accounts.id.prompt();
-         
+
     // };
 
 
@@ -131,9 +184,9 @@ const SignUp = () => {
 
                             {/* Social Icons */}
                             <div className="flex gap-4 my-4">
-                                <div 
-                                // onClick={googleLogin} 
-                                className="w-12 h-12 flex items-center cursor-pointer justify-center rounded-full bg-[#E7F9FD]/40 text-red-500 text-xl hover:shadow-md transition-all duration-300">
+                                <div
+                                    // onClick={googleLogin} 
+                                    className="w-12 h-12 flex items-center cursor-pointer justify-center rounded-full bg-[#E7F9FD]/40 text-red-500 text-xl hover:shadow-md transition-all duration-300">
                                     <FcGoogle size={25} />
                                 </div>
                                 <div className="w-12 h-12 flex items-center cursor-pointer  justify-center rounded-full bg-[#E7F9FD]/40 text-blue-600 text-xl hover:shadow-md transition-all duration-300">
@@ -216,12 +269,125 @@ const SignUp = () => {
                                     </label>
                                 </div>
 
+                                {/* If role is chef then show  */}
+                                {formData.role === "CHEF" && <>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Experience (years)</label>
+                                        <input type="number" min={0} max={60} value={experienceYears} onChange={(e) => setExperienceYears(e.target.value)}
+                                            className="mt-1 w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                                            placeholder="e.g., 5"
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">Enter whole years of experience (0–60).</p>
+                                        {formError.field === "experienceYears" && <span className='text-sm text-red-500'>{formError.value}</span>}
+
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Specializations</label>
+                                        <div className="mt-1 flex gap-2">
+                                            <select
+                                                value={specInput}
+                                                onChange={(e) => setSpecInput(e.target.value)}
+                                                className="flex-1 border rounded px-3 py-2 focus:ring-2 focus:ring-purple-500"
+                                            >
+                                                <option value="">Select specialization</option>
+                                                <option value="Indian">Indian</option>
+                                                <option value="Chinese">Chinese</option>
+                                                <option value="Italian">Italian</option>
+                                                <option value="Mexican">Mexican</option>
+                                                <option value="Japanese">Japanese</option>
+                                                <option value="French">French</option>
+                                            </select>
+                                            <button
+                                                type="button"
+                                                onClick={addSpec}
+                                                className="bg-purple-600 text-white px-4 py-2 rounded"
+                                            >
+                                                Add
+                                            </button>
+                                        </div>
+                                        {formError.field === "specialization" && (
+                                            <span className="text-sm text-red-500">{formError.value}</span>
+                                        )}
+
+                                        <div className="mt-3 flex flex-wrap gap-2">
+                                            {specialization.map((spec) => (
+                                                <span
+                                                    key={spec}
+                                                    className="inline-flex items-center bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm"
+                                                >
+                                                    {spec}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeSpec(spec)}
+                                                        className="ml-2 text-purple-700 hover:text-purple-900"
+                                                        aria-label={`Remove ${spec}`}
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Certifications</label>
+                                        <div className="mt-1 flex gap-2">
+                                            <select
+                                                value={certInput}
+                                                onChange={(e) => setCertInput(e.target.value)}
+                                                className="flex-1 border rounded px-3 py-2 focus:ring-2 focus:ring-green-500"
+                                            >
+                                                <option value="">Select certification</option>
+                                                <option value="Diploma in Culinary Arts">Diploma in Culinary Arts</option>
+                                                <option value="Food Safety & Hygiene">Food Safety & Hygiene</option>
+                                                <option value="Professional Chef Training">Professional Chef Training</option>
+                                                <option value="House Keeping">House Keeping</option>
+                                                <option value="Catering">Catering</option>
+                                                <option value="Chefing">Chefing</option>
+                                            </select>
+                                            <button
+                                                type="button"
+                                                onClick={addCert}
+                                                className="bg-green-600 text-white px-4 py-2 rounded"
+                                            >
+                                                Add
+                                            </button>
+                                        </div>
+                                        {formError.field === "certifications" && (
+                                            <span className="text-sm text-red-500">{formError.value}</span>
+                                        )}
+
+                                        <ul className="mt-3 space-y-2">
+                                            {certifications.map((cert) => (
+                                                <li
+                                                    key={cert}
+                                                    className="flex items-center justify-between bg-green-50 px-3 py-2 rounded"
+                                                >
+                                                    <span className="text-sm text-green-800">{cert}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeCert(cert)}
+                                                        className="text-green-700 hover:text-green-900"
+                                                        aria-label={`Remove ${cert}`}
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+
+                                </>
+
+                                }
+
+
                                 {/* Submit Button */}
                                 <button
                                     type='submit'
                                     className="mt-4 cursor-pointer bg-[#FF7967]/80 text-white py-3 rounded-xl hover:bg-[#FF7967] transition"
                                 >
-                                    Sign Up
+                                    {loading ? "Registering..." : "Sign Up"}
                                 </button>
                             </form>
                         </div>

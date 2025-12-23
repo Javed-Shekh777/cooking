@@ -1,5 +1,5 @@
 const nodemailer = require("nodemailer");
-const { mailOptions } = require("../constants");
+const { mailOptions, FRONTEND_URL } = require("../constants");
 
 const transpoter = nodemailer.createTransport({
   service: "gmail",
@@ -139,12 +139,12 @@ const verifyMail = async ({
             ${verificationCode}
           </div>
 
-          <p>OTP is valid for 15 minutes.</p>
+          <p>OTP is valid for 10 minutes.</p>
 
           ${webToken
           ? `
               <div style="text-align:center; margin:20px;">
-                <a href="${process.env.FRONTEND}/verify?token=${webToken}&email=${email}"
+                <a href="${FRONTEND_URL}/verify?token=${webToken}&email=${email}"
                   style="padding:12px 20px; background:#4CAF50; color:white; text-decoration:none; border-radius:5px;">
                   Verify Email
                 </a>
@@ -220,7 +220,7 @@ const contactMail = async ({
     const isAdmin = type === "ADMIN";
 
     const mailOptions = {
-      from: `"Cooking Saathi" <${process.env.MAIL_FROM}>`,
+      from: `"Cooking Saathi" <${mailOptions.ownerEmail}>`,
       to,
       subject: isAdmin
         ? `📩 New Contact Enquiry: ${subject}`
@@ -289,7 +289,7 @@ const allotChefMail = async ({ username, email, dashboardUrl }) => {
     .btn {
       display: inline-block;
       background: #2d7a46;
-      color: #fff;
+      color: white;
       padding: 12px 22px;
       text-decoration: none;
       border-radius: 5px;
@@ -330,7 +330,7 @@ const allotChefMail = async ({ username, email, dashboardUrl }) => {
     Start sharing your amazing recipes and inspire food lovers around the world!
   </p>
 
-  <a href="${dashboardUrl}" class="btn">Go to Chef Dashboard</a>
+  <a href="${dashboardUrl}" class="btn" style="color:white;">Go to Chef Dashboard</a>
 </div>
 
 <div class="footer">
@@ -621,5 +621,5 @@ const chefVerificationMail = async ({ username, email }) => {
 
 
 
-module.exports = { verifyMail, accountCreationMail, contactMail, allotChefMail, disAllotChefMail, chefApplicationMail,chefVerificationMail }
+module.exports = { verifyMail, accountCreationMail, contactMail, allotChefMail, disAllotChefMail, chefApplicationMail, chefVerificationMail }
 

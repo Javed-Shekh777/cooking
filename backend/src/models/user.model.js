@@ -4,6 +4,59 @@ const bcrypt = require("bcryptjs");
 const JWT = require("jsonwebtoken");
 
 
+// In your User or Chef model
+const ChefProfileSchema = new mongoose.Schema(
+    {
+        experienceYears: {
+            type: Number,
+            min: 0,
+            max: 60,
+            default: 0,
+            validate: {
+                validator: Number.isInteger,
+                message: "Experience must be an integer year count",
+            },
+        },
+        specialization: {
+            type: [String],
+            default: [],
+            // Optional: restrict to known cuisines
+            enum: [
+                "Indian",
+                "Chinese",
+                "Italian",
+                "Mexican",
+                "Japanese",
+                "Thai",
+                "French",
+                "Turkish",
+                "Mediterranean",
+                "Middle Eastern",
+                "Korean",
+                "Spanish",
+                "American",
+                "Vietnamese",
+                "Fusion",
+            ],
+        },
+        certifications: {
+            type: [String],
+            default: [],
+            // Optional: trim and prevent empty strings
+            set: (arr) => (Array.isArray(arr) ? arr.filter((s) => s?.trim()) : []),
+        },
+    },
+    { _id: false }
+);
+
+// Example embedding in User schema
+const UserSchema = new mongoose.Schema({
+    // ...
+    role: { type: String, enum: ["user", "chef", "admin"], default: "user" },
+    chefProfile: { type: ChefProfileSchema, default: () => ({}) }
+});
+
+
 const userSchema = new mongoose.Schema({
     role: {
         type: String,
@@ -34,7 +87,7 @@ const userSchema = new mongoose.Schema({
     mobile: {
         type: String,
     },
-     dob: {
+    dob: {
         type: String,
     },
     password: {
@@ -62,7 +115,7 @@ const userSchema = new mongoose.Schema({
     location: {
         // city: String,
         // country: String
-        type:String
+        type: String
     },
 
     isChefApproved: {

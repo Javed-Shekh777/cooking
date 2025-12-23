@@ -71,22 +71,36 @@ export const rejectRequest = createAsyncThunk("admin/rejectRequest", async (id, 
 });
 
 
-export const approveRequest = createAsyncThunk("admin/approveRequest", async ({ id, type }, { rejectWithValue }) => {
+export const approveRequest = createAsyncThunk(
+  "admin/approveRequest",
+  async ({ id, type, approve = null }, { rejectWithValue }) => {
     try {
-        let url;
-        if (type === "CATEGORY") {
-            url = `${adminApis.categorySoftDel}/${id}`
-        } else if (type === "RECIPE") {
-            url = `${adminApis.recipeSoftDel}/${id}`
+      let url;
+      let res;
 
-        }
-        const res = await api.delete(url);
-        return { data: res.data?.data, message: res?.data?.message };
+      if (type === "CATEGORY") {
+        url = `${adminApis.categorySoftDel}/${id}`;
+        res = await api.delete(url, { data: { approve } });
+      } else if (type === "RECIPE") {
+        url = `${adminApis.recipeSoftDel}/${id}`;
+        res = await api.delete(url, { data: { approve } });
+      } else if (["USER", "ADMIN", "CHEF"].includes(type)) {
+        url = `${adminApis.chefApprove}/${id}`;
+        res = await api.patch(url, { approve });
+      }
+
+      return { data: res.data?.data, message: res?.data?.message };
     } catch (error) {
-        const backendMessage = error.response?.data?.message || error.message || "Failed to load";
-        return rejectWithValue({ message: backendMessage, data: error?.response?.data });
+      const backendMessage =
+        error.response?.data?.message || error.message || "Failed to load";
+      return rejectWithValue({
+        message: backendMessage,
+        data: error?.response?.data,
+      });
     }
-});
+  }
+);
+
 
 export const blockUnblockUser = createAsyncThunk("admin/blockUnblockUser", async (id, { rejectWithValue }) => {
     try {

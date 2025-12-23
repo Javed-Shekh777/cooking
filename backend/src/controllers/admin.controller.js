@@ -8,11 +8,15 @@ const AuditLog = require("../models/auditLog.model");
 
 
 
-const { allotChefMail, disAllotChefMail } = require("../helper/sendMail");
+const { allotChefMail, disAllotChefMail, chefApplicationMail } = require("../helper/sendMail");
+const { startSession } = require("../helper/common");
+const { FRONTEND_URL } = require("../constants");
 
 
 
 exports.allotDisAllotChef = async (req, res, next) => {
+    const session = await startSession();
+
     try {
         const userId = req.params.id;
         const { approve } = req.body; // true / false
@@ -21,7 +25,7 @@ exports.allotDisAllotChef = async (req, res, next) => {
             return errorResponse(res, "approve flag is required", 400);
         }
 
-        const user = await User.findById(userId);
+        const user = await User.findById(userId).session(session);
         if (!user) {
             return errorResponse(res, "User not found", 404);
         }
@@ -44,24 +48,36 @@ exports.allotDisAllotChef = async (req, res, next) => {
         await user.save();
 
 
+        let request;
+        let status;
 
         // send email (async, no rollback)
         if (approve) {
-            await allotChefMail({ username: user.username, email: user.email, dashboardUrl: `${process.env.FRONTEND_URL}/chef/dashboard` });
+            request = await Request.findOneAndUpdate({ itemId: user?._id, status: "PENDING" }, { $set: { status: "APPROVED", approvedBy: req.user._id } }).session(session);
+            status="APPROVED";
+            await allotChefMail({ username: user.username, email: user.email, dashboardUrl: `${FRONTEND_URL}/chef` });
         } else {
+            request = await Request.findOneAndUpdate({ itemId: user?._id, status: "PENDING" }, { $set: { status: "REJECTED", approvedBy: req.user._id } }).session(session);
+            status="REJECTED";
+
             await disAllotChefMail({ username: user.username, email: user.email });
         }
 
+        await session.commitTransaction();
+        session.endSession();
         return successResponse(
             res,
             approve ? "Chef approved successfully" : "Chef access removed",
             {
-                id: user._id,
                 isChefApproved: user.isChefApproved,
-                role: user.role
+                role: user.role,
+                reqId: request?._id,
+                status: status
             }
         );
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         next(error);
 
         // return errorResponse(
@@ -221,10 +237,21 @@ exports.rejectRequest = async (req, res, next) => {
         if (!id) return errorResponse(res, "ID is missing", 400);
         console.log(id);
         const request = await Request.findOne({ _id: id, status: "PENDING" });
-        const r = await Request.findOne({ itemId: id });
-        console.log(r);
+
 
         if (!request) return errorResponse(res, "Pending request not found", 404);
+
+
+
+        const user = await User.findById(request?.itemId);
+        if (user) {
+            await disAllotChefMail({ username: user?.username, email: user?.email });
+
+            // update role + approval
+            user.isChefApproved = false;
+            await user.save();
+        }
+
 
         request.status = "REJECTED";
         request.rejectedBy = req.user._id;
