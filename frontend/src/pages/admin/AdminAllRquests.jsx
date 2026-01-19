@@ -28,7 +28,7 @@ const AdminAllRquests = () => {
     const matchesItemType = itemTypeFilter ? req.itemType === itemTypeFilter : true;
     const matchesStatus =
       statusFilter !== ""
-        ? req.status === (statusFilter === "true")
+        ? req.status === statusFilter 
         : true;
 
     return matchesSearch && matchesItemType && matchesStatus;
@@ -50,10 +50,6 @@ const AdminAllRquests = () => {
           approveRequest({ id, type,approve })
         ).unwrap();
       }
-
-
-
-
       toast.success(res?.message || "Status Changed");
     } catch (error) {
       toast.error(error?.message || "Something went wrong");
