@@ -356,7 +356,7 @@ const Profile = () => {
                 id="role"
                 name="role"
                 disabled
-                value={profile?.role || ""}
+                value={profile?.role?.toUpperCase() || ""}
                 className="w-full px-4 py-2 bg-gray-200 cursor-not-allowed border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Your full name"
               />

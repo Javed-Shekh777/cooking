@@ -73,9 +73,9 @@ const ManageUsers = () => {
                     className="px-3 py-2 border rounded"
                 >
                     <option value="">All Roles</option>
-                    <option value="user">User</option>
-                    <option value="chef">Chef</option>
-                    <option value="admin">Admin</option>
+                    <option value="USER">User</option>
+                    <option value="CHEF">Chef</option>
+                    <option value="ADMIN">Admin</option>
                 </select>
 
                 <select

@@ -26,7 +26,7 @@ const allowRoles = require("../middlewares/role.middleware");
 router.post(
   "/add-recipe",
   authenticated,
-  allowRoles("chef", "admin"),
+  allowRoles("CHEF", "ADMIN"),
   upload.fields([
     { name: "dishImage", maxCount: 1 },
     { name: "dishVideo", maxCount: 1 },
