@@ -437,7 +437,7 @@ exports.updateRecipe = async (req, res, next) => {
 
     return successResponse(res, "Recipe updated successfully", updatedRecipe);
 
-  } catch (err) {
+  } catch (error) {
     await session.abortTransaction();
 
     // rollback cloudinary
@@ -532,7 +532,7 @@ exports.restoreRecipe = async (req, res, next) => {
     session.endSession();
 
     return successResponse(res, "Recipe restored successfully");
-  } catch (err) {
+  } catch (error) {
     await session.abortTransaction();
     session.endSession();
     next(error);
@@ -709,8 +709,8 @@ exports.getRecipes = async (req, res, next) => {
     const recipes = await Recipe.find(filter).lean();
     return successResponse(res, "Recipes fetched", recipes);
 
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    next(error);
   }
 };
 
