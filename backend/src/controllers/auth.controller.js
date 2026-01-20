@@ -12,6 +12,8 @@ const AuditLog = require("../models/auditLog.model");
 const Request = require("../models/deleteRequest.model");
 
 
+ 
+
 
 exports.localRegister = async (req, res, next) => {
     const session = await startSession();
@@ -302,7 +304,7 @@ exports.localLogin = async (req, res, next) => {
         const cookieOptions = {
             httpOnly: true,
             secure: NODE_ENV === "production",
-            // sameSite: "strict"
+            sameSite: "none"
         };
 
         // ✅ ONLY refresh token cookie
@@ -351,7 +353,7 @@ exports.refreshToken = async (req, res, next) => {
         const cookieOptions = {
             httpOnly: true,
             secure: NODE_ENV === "production",
-            // sameSite: "strict"
+                       sameSite: "none"
         };
 
         // ✅ ONLY refresh token cookie
@@ -396,8 +398,7 @@ exports.logout = async (req, res, next) => {
         res.clearCookie("refreshToken", {
             httpOnly: true,
             secure: NODE_ENV === "production",
-
-            // sameSite: "strict",
+            sameSite: "none"
         });
 
 
