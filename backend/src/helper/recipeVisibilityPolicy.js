@@ -9,13 +9,13 @@ exports.recipeVisibilityPolicy = ({ user, query }) => {
 
   console.log(user,query);
   // 👨‍🍳 Chef
-  if (user.role === "chef") {
+  if (user.role === "CHEF") {
     filter.author = user.id;
     return filter; // published + draft + deleted=false
   }
 
   // 🛠 Admin
-  if (user.role === "admin") {
+  if (user.role === "ADMIN" || user.role === "SUPERADMIN") {
     if (query.isPublished !== undefined) {
       filter.isPublished = query.isPublished === "true";
     }

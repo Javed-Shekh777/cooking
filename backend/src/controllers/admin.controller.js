@@ -189,7 +189,7 @@ exports.getAdminDashboardStats = async (req, res, next) => {
 
         ] = await Promise.all([
             User.countDocuments(),
-            User.countDocuments({ role: "chef" }),
+            User.countDocuments({ role: "CHEF" }),
             Recipe.countDocuments(),
             Recipe.countDocuments({ isPublished: true, isDeleted: false }),
             Recipe.countDocuments({ isDeleted: true }),
