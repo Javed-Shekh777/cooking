@@ -297,7 +297,14 @@ exports.updateRecipe = async (req, res, next) => {
     const slugExists = await Recipe.findOne({ slug, _id: { $ne: id } }).session(session);
     if (slugExists) slug = `${slug}-${Date.now()}`;
 
-    const categoryId = new mongoose.Types.ObjectId.isValid(categoryObjectId);
+    const isValid = mongoose.Types.ObjectId.isValid(categoryObjectId);
+
+    if (!isValid) {
+      return errorResponse(res, "Invalid category id", 400);
+    }
+
+    const categoryId = new mongoose.Types.ObjectId(categoryObjectId);
+
 
     // Old media IDs for cleanup if new uploaded
     const oldDishImageId = existingRecipe.dishImage?.public_id;
